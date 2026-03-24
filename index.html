@@ -1,0 +1,1514 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>VC Sandbox — CDPI Digital Credentials</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@300;400;500;600;700&display=swap');
+:root{
+  --bg:#0a0f1a;--sf:#111827;--sf2:#1a2235;--br:#1f2f45;--br2:#2a3f5a;
+  --ac:#00d4ff;--gn:#10b981;--am:#f59e0b;--re:#ef4444;--tx:#e2e8f0;
+  --t2:#94a3b8;--t3:#64748b;
+  --credebl:#0ea5e9;--inji:#8b5cf6;--sunbird:#f97316;--mosip:#6366f1;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:var(--bg);color:var(--tx);font-family:'IBM Plex Sans',sans-serif;font-size:14px;line-height:1.5;overflow-x:hidden}
+.app{display:flex;height:100vh;overflow:hidden}
+
+/* SIDEBAR */
+.sidebar{width:230px;flex-shrink:0;background:var(--sf);border-right:1px solid var(--br);display:flex;flex-direction:column;overflow-y:auto}
+.sbl{padding:14px 14px 11px;border-bottom:1px solid var(--br)}
+.logo-row{display:flex;align-items:center;gap:7px;margin-bottom:4px}
+.logo-icon{width:26px;height:26px;background:var(--ac);display:grid;grid-template-columns:1fr 1fr;gap:2px;padding:3px;border-radius:4px}
+.logo-icon span{background:var(--bg);border-radius:1px}
+.logo-icon span:nth-child(3){visibility:hidden}
+.logo-title{font-size:12px;font-weight:700;letter-spacing:.05em}
+.logo-sub{font-size:10px;color:var(--t3);font-family:'IBM Plex Mono',monospace}
+.logo-badge{display:inline-block;margin-top:5px;font-family:'IBM Plex Mono',monospace;font-size:9px;color:var(--ac);border:1px solid var(--ac);padding:1px 6px;border-radius:2px}
+.sbs{padding:6px 0;border-bottom:1px solid var(--br)}
+.sbl-label{padding:0 11px 4px;font-size:9px;font-family:'IBM Plex Mono',monospace;color:var(--t3);letter-spacing:.12em;text-transform:uppercase}
+.navi{display:flex;align-items:center;gap:8px;padding:7px 11px;cursor:pointer;border-left:2px solid transparent;transition:all .15s;color:var(--t2);font-size:12px}
+.navi:hover{background:var(--sf2);color:var(--tx)}
+.navi.active{border-left-color:var(--ac);background:rgba(0,212,255,.05);color:var(--ac)}
+.ni{width:14px;text-align:center;flex-shrink:0;font-size:11px}
+.nd{width:5px;height:5px;border-radius:50%;margin-left:auto;flex-shrink:0}
+.nd.lv{background:var(--gn)}.nd.nw{background:var(--ac)}.nd.wn{background:var(--am)}
+.sdk-stack{padding:10px 11px;display:flex;flex-direction:column;gap:4px;margin-top:auto;border-top:1px solid var(--br)}
+.sdk-label{font-size:9px;color:var(--t3);font-family:'IBM Plex Mono',monospace;letter-spacing:.1em;text-transform:uppercase;margin-bottom:4px}
+.sdk-item{display:flex;align-items:center;gap:5px;font-size:10px;padding:2px 0}
+.sdk-dot{width:6px;height:6px;border-radius:2px;flex-shrink:0}
+
+/* MAIN */
+.main{flex:1;overflow-y:auto;display:flex;flex-direction:column}
+.topbar{height:48px;flex-shrink:0;border-bottom:1px solid var(--br);background:var(--sf);display:flex;align-items:center;padding:0 16px;gap:10px}
+.tbt{font-size:14px;font-weight:600}
+.tbr{margin-left:auto;display:flex;align-items:center;gap:8px}
+.bdg{font-family:'IBM Plex Mono',monospace;font-size:10px;padding:2px 8px;border-radius:3px}
+.bb{background:rgba(0,212,255,.1);color:var(--ac);border:1px solid rgba(0,212,255,.2)}
+.bp{background:rgba(139,92,246,.15);color:#a78bfa;border:1px solid rgba(139,92,246,.3)}
+.bam{background:rgba(245,158,11,.15);color:var(--am);border:1px solid rgba(245,158,11,.3)}
+.bt{background:rgba(20,184,166,.15);color:#2dd4bf;border:1px solid rgba(20,184,166,.3)}
+
+/* CONTENT */
+.cnt{flex:1;padding:16px;display:flex;flex-direction:column;gap:14px}
+.view{display:none}
+.view.active{display:flex;flex-direction:column;gap:14px}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.g3{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.g4{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+
+/* PANELS */
+.pnl{background:var(--sf);border:1px solid var(--br);border-radius:8px;overflow:hidden}
+.ph{padding:10px 13px;border-bottom:1px solid var(--br);display:flex;align-items:center;gap:8px;background:var(--sf2)}
+.pt{font-size:13px;font-weight:600}
+.ps{font-size:10px;color:var(--t3);margin-left:auto;font-family:'IBM Plex Mono',monospace}
+.pb{padding:12px;display:flex;flex-direction:column;gap:9px}
+
+/* FORMS */
+.fg{display:flex;flex-direction:column;gap:3px}
+.fl{font-size:10px;color:var(--t3);letter-spacing:.06em;text-transform:uppercase;font-family:'IBM Plex Mono',monospace}
+.fi,.fs{background:var(--sf2);border:1px solid var(--br2);border-radius:4px;padding:6px 10px;color:var(--tx);font-family:'IBM Plex Mono',monospace;font-size:12px;outline:none;transition:border-color .15s;width:100%}
+.fi:focus,.fs:focus{border-color:var(--ac)}.fi::placeholder{color:var(--t3)}
+.fs{cursor:pointer;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath fill='%2364748b' d='M0 0l5 6 5-6z'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 10px center}
+
+/* BUTTONS */
+.btn{padding:7px 13px;border-radius:4px;font-size:12px;font-weight:600;font-family:'IBM Plex Mono',monospace;cursor:pointer;border:none;transition:all .15s;letter-spacing:.04em;display:inline-flex;align-items:center;gap:5px;justify-content:center}
+.bpri{background:var(--ac);color:var(--bg)}.bpri:hover{background:#00b8e6}
+.bsec{background:var(--sf2);color:var(--t2);border:1px solid var(--br2)}.bsec:hover{border-color:var(--ac);color:var(--ac)}
+.bgrn{background:var(--gn);color:#fff}.bgrn:hover{background:#059669}
+.bw{width:100%}.btn:disabled{opacity:.4;cursor:not-allowed}
+
+/* OUTPUT / RESULT BOXES */
+.rb{background:var(--bg);border:1px solid var(--br);border-radius:4px;padding:10px;font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--t2);white-space:pre-wrap;max-height:220px;overflow-y:auto;line-height:1.6}
+.rb.ok{border-color:rgba(16,185,129,.4);color:var(--gn)}.rb.er{border-color:rgba(239,68,68,.4);color:var(--re)}.rb.pd{border-color:rgba(0,212,255,.3)}
+
+/* STATUS ROW */
+.sr{display:flex;align-items:center;gap:7px;padding:5px 9px;background:var(--sf2);border-radius:4px;font-size:11px}
+.dot{width:6px;height:6px;border-radius:50%;flex-shrink:0}
+.dg{background:var(--gn);box-shadow:0 0 4px var(--gn)}.db{background:var(--ac)}.dam{background:var(--am)}.dgr{background:var(--t3)}.dr{background:var(--re)}
+.sl{color:var(--t2);flex:1}
+
+/* CHIPS */
+.ch{display:inline-flex;align-items:center;padding:2px 7px;border-radius:2px;font-size:9px;font-family:'IBM Plex Mono',monospace;font-weight:600;letter-spacing:.05em}
+.cg{background:rgba(16,185,129,.15);color:var(--gn)}.cb{background:rgba(0,212,255,.1);color:var(--ac)}.cam{background:rgba(245,158,11,.15);color:var(--am)}.cp{background:rgba(139,92,246,.15);color:#a78bfa}.cgr{background:rgba(100,116,139,.2);color:var(--t3)}.ct{background:rgba(20,184,166,.15);color:#2dd4bf}.cre{background:rgba(239,68,68,.15);color:var(--re)}
+
+/* INFO BOXES */
+.ib{background:rgba(0,212,255,.05);border:1px solid rgba(0,212,255,.2);border-radius:4px;padding:8px 10px;font-size:11px;color:var(--t2);line-height:1.6}
+.ib.wn{background:rgba(245,158,11,.05);border-color:rgba(245,158,11,.2)}
+.ib.tl{background:rgba(20,184,166,.05);border-color:rgba(20,184,166,.25)}
+.ib.gn{background:rgba(16,185,129,.05);border-color:rgba(16,185,129,.25)}
+.ib strong{color:var(--tx)}
+
+/* VC CARDS */
+.vcc{border-radius:10px;padding:13px;border:1px solid;overflow:hidden}
+.vcc.nat{background:linear-gradient(135deg,#0f1f3d,#1a3a5c);border-color:#2a5f8f}
+.vcc.birth{background:linear-gradient(135deg,#0f2918,#1a3d28);border-color:#2a6b45}
+.vcc.edu{background:linear-gradient(135deg,#1f0f3d,#3a1a5c);border-color:#5a2a8f}
+.vcc.emp{background:linear-gradient(135deg,#1f1505,#3a2a0a);border-color:#7a5a1a}
+.vcc.health{background:linear-gradient(135deg,#0f1f2d,#0a2a3a);border-color:#1a5f7a}
+.vch{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:9px}
+.vcis{font-size:9px;color:rgba(255,255,255,.45);text-transform:uppercase;letter-spacing:.1em;font-family:'IBM Plex Mono',monospace}
+.vcty{font-size:13px;font-weight:700;color:#fff;margin-top:2px}
+.vcsl{width:27px;height:27px;border-radius:50%;background:rgba(255,255,255,.1);display:flex;align-items:center;justify-content:center;font-size:13px}
+.vcflds{display:grid;grid-template-columns:1fr 1fr;gap:5px;margin-bottom:8px}
+.vcfl{font-size:8px;color:rgba(255,255,255,.4);text-transform:uppercase}
+.vcfv{font-size:10px;color:rgba(255,255,255,.9);font-family:'IBM Plex Mono',monospace}
+.vcft{padding-top:7px;border-top:1px solid rgba(255,255,255,.1);display:flex;justify-content:space-between;align-items:center}
+.vcdid{font-size:8px;color:rgba(255,255,255,.25);font-family:'IBM Plex Mono',monospace}
+.vcver{font-size:10px;color:var(--gn)}
+
+/* QR */
+.qrb{display:flex;flex-direction:column;align-items:center;gap:6px;padding:12px;background:var(--bg);border:1px solid var(--br);border-radius:4px}
+
+/* PROGRESS BAR */
+.pbar{height:3px;background:var(--br);border-radius:2px;overflow:hidden}
+.pf{height:100%;border-radius:2px;background:var(--ac);transition:width .4s}
+
+/* BULK */
+.dropz{border:2px dashed var(--br2);border-radius:8px;padding:28px 18px;text-align:center;cursor:pointer;transition:all .2s;background:var(--sf2)}
+.dropz:hover,.dropz.drag{border-color:var(--ac);background:rgba(0,212,255,.04)}
+.dicon{font-size:34px;margin-bottom:7px}
+.dtit{font-size:14px;font-weight:600;margin-bottom:3px}
+.dsub{font-size:11px;color:var(--t3)}
+.uprow{display:flex;align-items:center;gap:8px;padding:6px 9px;border-bottom:1px solid var(--br);font-size:11px;font-family:'IBM Plex Mono',monospace}
+.uprow:last-child{border-bottom:none}
+.upname{flex:1;color:var(--t2)}.upuin{color:var(--ac);min-width:130px}.upst{min-width:60px}
+.stcard{background:var(--sf2);border:1px solid var(--br);border-radius:6px;padding:11px;text-align:center}
+.stval{font-size:22px;font-weight:700;font-family:'IBM Plex Mono',monospace}
+.stlb{font-size:10px;color:var(--t3);margin-top:2px}
+
+/* WALLET / PHONE */
+.walwrap{background:var(--sf);border:1px solid var(--br);border-radius:12px;overflow:hidden}
+.waltop{background:linear-gradient(135deg,#0a1628,#0d2040,#0a1628);padding:18px 18px 0}
+.walhead{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px}
+.walname{font-size:16px;font-weight:700}
+.waldid{font-size:10px;color:rgba(255,255,255,.35);font-family:'IBM Plex Mono',monospace;margin-top:2px}
+.walavt{width:38px;height:38px;border-radius:50%;background:linear-gradient(135deg,var(--ac),var(--inji));display:flex;align-items:center;justify-content:center;font-size:17px}
+.waltabs{display:flex;border-bottom:1px solid rgba(255,255,255,.1)}
+.waltab{padding:7px 13px;font-size:11px;cursor:pointer;color:rgba(255,255,255,.38);border-bottom:2px solid transparent;font-family:'IBM Plex Mono',monospace;transition:all .15s}
+.waltab:hover{color:rgba(255,255,255,.65)}.waltab.active{color:#fff;border-bottom-color:var(--ac)}
+.walbody{padding:14px}
+.clabel{font-size:10px;color:var(--t3);font-family:'IBM Plex Mono',monospace;letter-spacing:.1em;text-transform:uppercase;margin-bottom:10px}
+.cfan{position:relative;height:190px;margin-bottom:12px}
+.cfi{position:absolute;width:100%;cursor:pointer;transition:all .35s cubic-bezier(.34,1.56,.64,1);transform-origin:bottom center}
+.cfi:hover{z-index:20!important;filter:brightness(1.1)}
+.cfi .vcc{box-shadow:0 8px 28px rgba(0,0,0,.4)}
+.clist{display:flex;flex-direction:column;gap:7px}
+.cli{background:var(--sf2);border:1px solid var(--br);border-radius:8px;padding:9px 12px;display:flex;align-items:center;gap:10px;cursor:pointer;transition:all .2s}
+.cli:hover{border-color:var(--br2)}
+.cliicon{width:34px;height:34px;border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:17px;flex-shrink:0}
+.climeta{flex:1}
+.cliname{font-size:13px;font-weight:600}
+.cliiss{font-size:10px;color:var(--t3);font-family:'IBM Plex Mono',monospace;margin-top:1px}
+.cliact{display:flex;gap:5px}
+.ca{padding:3px 8px;font-size:10px;border-radius:3px;cursor:pointer;font-family:'IBM Plex Mono',monospace;border:1px solid var(--br2);background:transparent;color:var(--t3);transition:all .15s}
+.ca:hover{border-color:var(--ac);color:var(--ac)}
+.ca.share{border-color:rgba(16,185,129,.4);color:var(--gn)}
+.ca.share:hover{background:rgba(16,185,129,.08)}
+.phone-shell{background:#0d0d14;border:3px solid #2a3f5a;border-radius:40px;padding:14px 8px 18px;box-shadow:0 24px 64px rgba(0,0,0,.55),inset 0 1px 0 rgba(255,255,255,.06);position:relative;max-width:360px;margin:0 auto}
+.phone-notch{width:90px;height:22px;background:#0d0d14;border:2px solid #2a3f5a;border-radius:11px;margin:0 auto 8px;display:flex;align-items:center;justify-content:center;gap:6px}
+.phone-camera{width:7px;height:7px;border-radius:50%;background:#1a2a3a}
+.phone-speaker{width:32px;height:4px;border-radius:2px;background:#1a2a3a}
+.phone-statusbar{display:flex;justify-content:space-between;padding:0 12px 6px;font-size:9px;color:rgba(255,255,255,.3);font-family:'IBM Plex Mono',monospace}
+.phone-homeind{width:40px;height:4px;background:#2a3f5a;border-radius:2px;margin:10px auto 0}
+
+/* MODALS */
+.movl{position:fixed;inset:0;background:rgba(0,0,0,.75);display:flex;align-items:center;justify-content:center;z-index:200;backdrop-filter:blur(4px)}
+.modal{background:var(--sf);border:1px solid var(--br);border-radius:12px;width:390px;max-width:92vw;overflow:hidden;max-height:92vh;overflow-y:auto}
+.mhdr{padding:12px 15px;border-bottom:1px solid var(--br);display:flex;align-items:center;gap:9px;background:var(--sf2);position:sticky;top:0}
+.mcls{margin-left:auto;background:none;border:none;color:var(--t3);cursor:pointer;font-size:15px;padding:0 3px}
+.mcls:hover{color:var(--tx)}
+.mbody{padding:14px;display:flex;flex-direction:column;gap:11px}
+.qrs{background:var(--bg);border:1px solid var(--br);border-radius:8px;padding:14px;display:flex;flex-direction:column;align-items:center;gap:7px}
+.shopts{display:flex;gap:7px;flex-wrap:wrap;justify-content:center}
+.shbtn{display:flex;flex-direction:column;align-items:center;gap:3px;padding:9px 13px;border:1px solid var(--br2);border-radius:6px;cursor:pointer;background:var(--sf2);transition:all .2s;font-size:10px;color:var(--t2);font-family:'IBM Plex Mono',monospace}
+.shbtn:hover{border-color:var(--ac);color:var(--ac)}
+.shbtn .ic{font-size:19px}
+.acgrid{display:grid;grid-template-columns:1fr 1fr;gap:7px}
+.acopt{border:1px solid var(--br);border-radius:6px;padding:9px;cursor:pointer;transition:all .2s;text-align:center;background:var(--sf2)}
+.acopt:hover{border-color:var(--ac);background:rgba(0,212,255,.04)}
+.acopt.sel{border-color:var(--ac);background:rgba(0,212,255,.08)}
+.aci{font-size:20px;margin-bottom:3px}.acn{font-size:11px;font-weight:600}.acis{font-size:9px;color:var(--t3);margin-top:1px}
+
+/* TABS */
+.tabs{display:flex;border-bottom:1px solid var(--br)}
+.tab{padding:8px 13px;font-size:11px;cursor:pointer;color:var(--t3);border-bottom:2px solid transparent;font-family:'IBM Plex Mono',monospace;transition:all .15s;white-space:nowrap}
+.tab:hover{color:var(--t2)}.tab.active{color:var(--ac);border-bottom-color:var(--ac)}
+
+/* ISSUANCE FLOW STEPS */
+.fstep{display:flex;gap:10px;padding:8px;border-left:2px solid var(--br);margin-left:10px}
+.fstep.a{border-left-color:var(--ac)}.fstep.d{border-left-color:var(--gn)}
+.fdot{width:17px;height:17px;border-radius:50%;background:var(--br);display:flex;align-items:center;justify-content:center;font-size:9px;flex-shrink:0;margin-left:-19px}
+.fstep.a .fdot{background:var(--ac);color:var(--bg)}.fstep.d .fdot{background:var(--gn);color:var(--bg)}
+
+/* LOG */
+.ll{display:flex;gap:6px;font-size:10px;font-family:'IBM Plex Mono',monospace;padding:2px 0;border-bottom:1px solid rgba(31,47,69,.5)}
+.lt{color:var(--t3);flex-shrink:0;width:52px}.lm{width:60px;flex-shrink:0}.lmg{color:var(--t2);flex:1}
+.ll.lok .lmg{color:var(--gn)}.ll.ler .lmg{color:var(--re)}.ll.linf .lmg{color:var(--ac)}
+
+/* STANDARDS PANEL */
+.std-row{display:flex;align-items:flex-start;gap:8px;padding:7px 9px;border-radius:4px;margin-bottom:4px}
+.std-row.rec{background:rgba(16,185,129,.05);border:1px solid rgba(16,185,129,.2)}
+.std-row.opt{background:rgba(245,158,11,.04);border:1px solid rgba(245,158,11,.18)}
+.std-dot{width:5px;height:5px;border-radius:50%;flex-shrink:0;margin-top:5px}
+
+/* HERO BANNER */
+.hero{background:linear-gradient(135deg,rgba(0,212,255,.06),rgba(139,92,246,.04));border:1px solid rgba(0,212,255,.15);border-radius:10px;padding:20px;display:flex;gap:18px;align-items:flex-start}
+.hero-icon{font-size:36px;flex-shrink:0}
+.hero-title{font-size:18px;font-weight:700;margin-bottom:5px}
+.hero-sub{font-size:12px;color:var(--t2);line-height:1.7}
+.hero-chips{display:flex;flex-wrap:wrap;gap:5px;margin-top:10px}
+
+/* ARCHITECTURE FLOW */
+.arch-flow{display:flex;align-items:center;overflow-x:auto;padding:16px;gap:0;background:var(--bg);border:1px solid var(--br);border-radius:6px}
+.arch-node{display:flex;flex-direction:column;align-items:center;gap:5px;flex-shrink:0}
+.arch-box{padding:8px 10px;border-radius:6px;border:1px solid;text-align:center;font-size:10px;font-family:'IBM Plex Mono',monospace;width:88px}
+.arch-box.credebl{border-color:var(--credebl);color:var(--credebl);background:rgba(14,165,233,.08)}
+.arch-box.inji{border-color:var(--inji);color:var(--inji);background:rgba(139,92,246,.08)}
+.arch-box.sunbird{border-color:var(--sunbird);color:var(--sunbird);background:rgba(249,115,22,.08)}
+.arch-box.mosip{border-color:var(--mosip);color:var(--mosip);background:rgba(99,102,241,.08)}
+.arch-box.wallet{border-color:var(--gn);color:var(--gn);background:rgba(16,185,129,.08)}
+.arch-box.verifier{border-color:var(--am);color:var(--am);background:rgba(245,158,11,.08)}
+.arch-icon{font-size:17px;margin-bottom:2px}
+.arch-arr{display:flex;flex-direction:column;align-items:center;padding:0 3px;color:var(--t3);font-size:12px;flex-shrink:0;margin-top:18px;gap:1px}
+.arch-lbl{font-size:8px;font-family:'IBM Plex Mono',monospace;color:var(--t3);white-space:nowrap}
+.arch-sub{font-size:9px;color:var(--t3);text-align:center;max-width:88px}
+
+/* ANIMATIONS */
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+.pls{animation:pulse 1.5s infinite}
+@keyframes si{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:translateY(0)}}
+.si{animation:si .25s ease}
+::-webkit-scrollbar{width:4px;height:4px}
+::-webkit-scrollbar-track{background:var(--bg)}
+::-webkit-scrollbar-thumb{background:var(--br2);border-radius:2px}
+</style>
+</head>
+<body>
+<div class="app">
+
+<!-- SIDEBAR -->
+<div class="sidebar">
+  <div class="sbl">
+    <div class="logo-row">
+      <div class="logo-icon"><span></span><span></span><span></span><span></span></div>
+      <span class="logo-title">VC SANDBOX</span>
+    </div>
+    <div class="logo-sub">cdpi.dev / credentials</div>
+    <span class="logo-badge">Digital Credentials</span>
+  </div>
+
+  <div class="sbs">
+    <div class="sbl-label">Overview</div>
+    <div class="navi active" onclick="nav('how-it-works',this)"><div class="ni">⬡</div><span>How It Works</span><div class="nd lv"></div></div>
+  </div>
+
+  <div class="sbs">
+    <div class="sbl-label">Issuance</div>
+    <div class="navi" onclick="nav('vc-issue',this)"><div class="ni">◈</div><span>Issue a Credential</span><div class="nd lv"></div></div>
+    <div class="navi" onclick="nav('bulk',this)"><div class="ni">⊟</div><span>Bulk Upload</span><div class="nd nw"></div></div>
+  </div>
+
+  <div class="sbs">
+    <div class="sbl-label">Citizen Side</div>
+    <div class="navi" onclick="nav('wallet',this)"><div class="ni">◑</div><span>Mobile Wallet</span><div class="nd nw"></div></div>
+  </div>
+
+  <div class="sbs">
+    <div class="sbl-label">Verification</div>
+    <div class="navi" onclick="nav('verify',this)"><div class="ni">◎</div><span>Online Verify</span><div class="nd lv"></div></div>
+    <div class="navi" onclick="nav('offline-verify',this)"><div class="ni">⊛</div><span>Offline / Local</span><div class="nd wn"></div></div>
+  </div>
+
+  <div class="sdk-stack">
+    <div class="sdk-label">Open Source Stack</div>
+    <div class="sdk-item"><div class="sdk-dot" style="background:var(--credebl)"></div><span style="color:var(--t2);font-size:10px">CREDEBL — Issuer</span></div>
+    <div class="sdk-item"><div class="sdk-dot" style="background:var(--inji)"></div><span style="color:var(--t2);font-size:10px">Inji — Wallet + Verify</span></div>
+    <div class="sdk-item"><div class="sdk-dot" style="background:var(--sunbird)"></div><span style="color:var(--t2);font-size:10px">Sunbird RC — Registry</span></div>
+    <div class="sdk-item"><div class="sdk-dot" style="background:var(--mosip)"></div><span style="color:var(--t2);font-size:10px">MOSIP — ID Backbone</span></div>
+  </div>
+</div>
+
+<!-- MAIN -->
+<div class="main">
+  <div class="topbar">
+    <span class="tbt" id="tbt">◈ VC Sandbox</span>
+    <div class="tbr">
+      <span class="bdg bb" id="tbdg">W3C + OID4VC</span>
+      <span style="font-size:10px;color:var(--t3);font-family:'IBM Plex Mono',monospace">cdpi.dev</span>
+    </div>
+  </div>
+  <div class="cnt">
+
+    <!-- ===== HOW IT WORKS ===== -->
+    <div class="view active" id="view-how-it-works">
+      <div class="hero">
+        <div class="hero-icon">🪪</div>
+        <div>
+          <div class="hero-title">Verifiable Credentials (VCs) for DPI</div>
+          <div class="hero-sub">This sandbox demonstrates how a government or service provider can <strong>issue, store, and verify</strong> digital credentials — using open-source DPGs (Digital Public Goods) that any country can deploy. No vendor lock-in. No proprietary formats.</div>
+          <div class="hero-chips">
+            <span class="ch cb">W3C VC Data Model 2.0</span>
+            <span class="ch cp">OID4VCI / OID4VP</span>
+            <span class="ch cam">AnonCreds / SD-JWT</span>
+            <span class="ch ct">ISO mDL 18013-5</span>
+            <span class="ch cg">Offline-capable</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="pnl">
+        <div class="ph"><span class="pt">End-to-End Flow</span><span class="ps">from issuance → wallet → verification</span></div>
+        <div class="pb">
+          <div class="arch-flow">
+            <div class="arch-node">
+              <div class="arch-box mosip"><div class="arch-icon">🪪</div>MOSIP<br>ID Registry</div>
+              <div class="arch-sub">Citizen has a UIN / VID</div>
+            </div>
+            <div class="arch-arr"><span>→</span><span class="arch-lbl">OID4VCI</span></div>
+            <div class="arch-node">
+              <div class="arch-box credebl"><div class="arch-icon">◈</div>CREDEBL<br>Issuer</div>
+              <div class="arch-sub">Signs VC with Issuer DID</div>
+            </div>
+            <div class="arch-arr"><span>→</span><span class="arch-lbl">QR / Deep link</span></div>
+            <div class="arch-node">
+              <div class="arch-box wallet"><div class="arch-icon">📱</div>Inji Wallet<br>Citizen App</div>
+              <div class="arch-sub">Stores & shares VCs</div>
+            </div>
+            <div class="arch-arr"><span>→</span><span class="arch-lbl">QR / NFC / Online</span></div>
+            <div class="arch-node">
+              <div class="arch-box verifier"><div class="arch-icon">◎</div>Inji Verify<br>Verifier App</div>
+              <div class="arch-sub">Cryptographic check</div>
+            </div>
+            <div class="arch-arr"><span>→</span><span class="arch-lbl">DID resolve</span></div>
+            <div class="arch-node">
+              <div class="arch-box sunbird"><div class="arch-icon">🔗</div>Sunbird RC<br>Trust Registry</div>
+              <div class="arch-sub">Confirms issuer authority</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="g3">
+        <div class="pnl">
+          <div class="ph"><span class="pt">📋 Credential Types</span></div>
+          <div class="pb">
+            <div class="ib" style="font-size:11px;line-height:1.9">
+              <strong>Civil Registry:</strong> National ID, Birth Cert, Marriage<br>
+              <strong>Education:</strong> Degree, Professional Licence, TVET<br>
+              <strong>Employment:</strong> Employment Record, Farmer Reg, G2P<br>
+              <strong>Health:</strong> Health Card, Vaccination Record<br>
+              <strong>Financial:</strong> KYC, Bank Account Proof<br>
+              <strong>Travel:</strong> mDL, Age Verification, Visa<br>
+              <strong>Business:</strong> SME Identity, Supply Chain
+            </div>
+          </div>
+        </div>
+        <div class="pnl">
+          <div class="ph"><span class="pt">🔐 VC Formats Supported</span></div>
+          <div class="pb" style="gap:6px">
+            <div class="sr"><div class="dot dg"></div><div class="sl"><strong>AnonCreds</strong> — Zero-knowledge privacy</div></div>
+            <div class="sr"><div class="dot dg"></div><div class="sl"><strong>JSON-LD W3C</strong> — Semantic interop</div></div>
+            <div class="sr"><div class="dot dg"></div><div class="sl"><strong>SD-JWT VC</strong> — Selective disclosure</div></div>
+            <div class="sr"><div class="dot db"></div><div class="sl"><strong>ISO mDL / mdoc</strong> — Device-bound ID</div></div>
+          </div>
+        </div>
+        <div class="pnl">
+          <div class="ph"><span class="pt">✓ Verification Modes</span></div>
+          <div class="pb" style="gap:6px">
+            <div class="sr"><div class="dot dg"></div><div class="sl"><strong>Online</strong> — DID resolution + revocation check</div></div>
+            <div class="sr"><div class="dot dam"></div><div class="sl"><strong>Offline QR</strong> — Cached keys, zero connectivity</div></div>
+            <div class="sr"><div class="dot db"></div><div class="sl"><strong>Selective disclosure</strong> — Prove a field, hide others</div></div>
+            <div class="sr"><div class="dot dg"></div><div class="sl"><strong>NFC tap</strong> — Proximity, device-to-device</div></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="ib tl"><strong>Try it →</strong> Use the sidebar to issue a single VC, bulk-upload an Excel file of citizens, see how it lands in a mobile wallet, then verify it — both online and offline without any internet connection.</div>
+    </div>
+
+    <!-- ===== VC ISSUANCE ===== -->
+    <div class="view" id="view-vc-issue">
+      <div class="ib"><strong>CREDEBL</strong> — W3C VC issuance over OID4VCI. DID-signed credentials. AnonCreds / JSON-LD / SD-JWT / ISO mDL. Choose a type, fill fields, issue, then push to the mobile wallet.</div>
+      <div class="g2">
+        <div class="pnl">
+          <div class="ph"><span class="pt">Issue Credential</span><span class="ps"><span class="ch cb">CREDEBL</span></span></div>
+          <div class="pb">
+            <div class="fg">
+              <div class="fl">Credential Type</div>
+              <select class="fs" id="vc_type" onchange="updateVCFields()">
+                <optgroup label="─── Civil Registry ───">
+                  <option value="nat">National Identity Card</option>
+                  <option value="birth">Birth Certificate</option>
+                  <option value="marriage">Marriage Certificate</option>
+                  <option value="death">Death Certificate</option>
+                </optgroup>
+                <optgroup label="─── Education ───">
+                  <option value="edu">Education / Degree Certificate</option>
+                  <option value="proflicense">Professional Licence</option>
+                  <option value="skills">Skills &amp; Vocational Certificate</option>
+                </optgroup>
+                <optgroup label="─── Employment &amp; Social ───">
+                  <option value="emp">Employment Record</option>
+                  <option value="farmer">Farmer Registration</option>
+                  <option value="g2p">Social Protection / G2P Eligibility</option>
+                </optgroup>
+                <optgroup label="─── Health ───">
+                  <option value="health">Health Card</option>
+                  <option value="vaccine">Vaccination / Immunisation Record</option>
+                </optgroup>
+                <optgroup label="─── Financial ───">
+                  <option value="kyc">KYC / Financial Identity</option>
+                  <option value="bank">Bank Account Proof</option>
+                </optgroup>
+                <optgroup label="─── Travel &amp; Other ───">
+                  <option value="mdl">Driver's Licence (mDL / ISO 18013-5)</option>
+                  <option value="age">Age Verification</option>
+                  <option value="travel">Travel &amp; Tourism Authorisation</option>
+                  <option value="sme">Business / SME Identity</option>
+                  <option value="supply">Supply Chain Provenance</option>
+                </optgroup>
+                <optgroup label="─── Custom ───">
+                  <option value="custom">✏️ Custom Credential Type…</option>
+                </optgroup>
+              </select>
+            </div>
+            <div class="fg" id="vc_custom_type_row" style="display:none">
+              <div class="fl">Custom Credential Name</div>
+              <input class="fi" id="vc_custom_type_name" placeholder="e.g. Land Title, Refugee ID, Disability Card" oninput="syncCustomTypeName()"/>
+            </div>
+            <div class="fg"><div class="fl">Subject UIN</div><input class="fi" id="vc_uin" placeholder="UIN-xxxx-xxxx-xxxx"/></div>
+            <div class="fg">
+              <div class="fl">Issuer DID</div>
+              <select class="fs" id="vc_did">
+                <option value="did:polygon:0xGovID">did:polygon:0xGovID (National ID)</option>
+                <option value="did:web:civil.gov">did:web:civil.gov (Civil Registry)</option>
+                <option value="did:polygon:0xEduMin">did:polygon:0xEduMin (Education)</option>
+                <option value="did:web:health.gov">did:web:health.gov (Health Ministry)</option>
+                <option value="did:web:labour.gov">did:web:labour.gov (Labour Ministry)</option>
+                <option value="did:web:finance.gov">did:web:finance.gov (Finance Ministry)</option>
+              </select>
+            </div>
+            <div class="fg">
+              <div class="fl">Format</div>
+              <select class="fs" id="vc_format">
+                <option value="anoncreds">AnonCreds (Privacy-preserving ZKP)</option>
+                <option value="jsonld">JSON-LD W3C VC 2.0</option>
+                <option value="mdoc">ISO mDL / mdoc</option>
+                <option value="sdjwt">SD-JWT VC (Selective Disclosure)</option>
+              </select>
+            </div>
+            <!-- Live field editor -->
+            <div id="vc_field_editor" style="display:flex;flex-direction:column;gap:6px;padding:8px;background:var(--sf2);border:1px solid var(--br2);border-radius:4px">
+              <div style="font-size:10px;color:var(--t3);font-family:'IBM Plex Mono',monospace;letter-spacing:.06em;text-transform:uppercase;margin-bottom:2px">Credential Fields <span style="color:var(--ac)">(edit values freely)</span></div>
+              <div id="vc_fields_list" style="display:flex;flex-direction:column;gap:4px"></div>
+              <div style="display:flex;gap:6px;margin-top:2px">
+                <input class="fi" id="vc_new_field_key" placeholder="Field name" style="flex:1;font-size:11px"/>
+                <input class="fi" id="vc_new_field_val" placeholder="Value" style="flex:1;font-size:11px"/>
+                <button class="btn bsec" style="padding:4px 9px;font-size:11px;white-space:nowrap" onclick="vcAddField()">+ Add</button>
+              </div>
+            </div>
+            <button class="btn bpri bw" onclick="issueVC()">◈ Issue Credential</button>
+          </div>
+        </div>
+
+        <div style="display:flex;flex-direction:column;gap:12px">
+          <div class="pnl">
+            <div class="ph"><span class="pt">Credential Card</span><span class="ps" id="vc_fmtb">AnonCreds</span></div>
+            <div class="pb">
+              <div id="vcPrev"><div class="rb" style="min-height:100px">Credential card will appear here after issuance…</div></div>
+              <div style="display:flex;gap:6px;margin-top:4px">
+                <button class="btn bsec" style="flex:1" onclick="showVCJson()" id="vcJBtn" disabled>{ } JSON</button>
+                <button class="btn bsec" style="flex:1" onclick="showVCQR()" id="vcQBtn" disabled>⊟ QR</button>
+                <button class="btn bsec" style="flex:1" onclick="addToWallet()" id="vcWBtn" disabled>📱 Wallet</button>
+                <button class="btn bsec" style="flex:1" onclick="dlVC()" id="vcDlBtn" disabled>↓ DL</button>
+              </div>
+              <div id="vcQRD" style="display:none"><div class="qrb"><canvas id="vcQRC" width="120" height="120"></canvas><div style="font-size:10px;color:var(--t3)">Offline-capable QR</div></div></div>
+              <div id="vcJSD" style="display:none"><div class="rb" id="vcRJ" style="max-height:180px"></div></div>
+            </div>
+          </div>
+
+          <div class="pnl">
+            <div class="ph"><span class="pt">Issuance Log</span><span class="ps"><span class="ch cp">DID Registry</span></span></div>
+            <div class="pb" style="padding:6px 10px"><div style="max-height:110px;overflow-y:auto" id="vcIL">
+              <div class="ll linf"><span class="lt">00:00:00</span><span class="lm" style="color:var(--credebl)">CREDEBL</span><span class="lmg">Issuer ready. 20 schemas loaded.</span></div>
+              <div class="ll linf"><span class="lt">00:00:01</span><span class="lm" style="color:var(--inji)">INJI</span><span class="lmg">Trust store loaded. 6 issuer DIDs cached.</span></div>
+            </div></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Standards panel -->
+      <div class="pnl" id="vcStandardsPanel" style="display:none">
+        <div class="ph">
+          <span class="pt">◈ Recommended Standards for this Credential Type</span>
+          <span class="ps" style="color:#2dd4bf">vc-use-cases.cdpi.dev</span>
+        </div>
+        <div class="pb" id="vcStandardsBody"></div>
+      </div>
+    </div>
+
+    <!-- ===== BULK UPLOAD ===== -->
+    <div class="view" id="view-bulk">
+      <div class="ib tl"><strong>Bulk VC Generation</strong> — Upload an Excel (.xlsx) or CSV file containing citizen data. CREDEBL auto-generates a Verifiable Credential for each row using the selected type. Download the enriched output file with VC IDs and QR payloads.</div>
+
+      <div class="g2">
+        <div class="pnl">
+          <div class="ph"><span class="pt">Upload Citizen Data</span><span class="ps"><span class="ch cb">XLSX / CSV</span></span></div>
+          <div class="pb">
+            <div class="dropz" id="dropZ" onclick="document.getElementById('fileIn').click()" ondragover="dzOver(event)" ondragleave="dzLeave(event)" ondrop="dzDrop(event)">
+              <div class="dicon">📊</div>
+              <div class="dtit">Drop Excel / CSV here</div>
+              <div class="dsub">or click to browse &middot; .xlsx, .xls, .csv</div>
+            </div>
+            <input type="file" id="fileIn" accept=".xlsx,.xls,.csv" style="display:none" onchange="handleFile(this.files[0])"/>
+            <div class="ib wn" style="font-size:10px"><strong>Expected columns:</strong> name, dob (YYYY-MM-DD), gender, phone, document_type, document_number<br>Missing columns are auto-filled with defaults. <a href="#" onclick="dlTemplate();return false;" style="color:var(--ac)">Download template →</a></div>
+            <button class="btn bsec bw" onclick="loadSampleBulk()">📋 Load Sample Dataset (10 citizens)</button>
+            <div id="bulkFI" style="font-size:11px;color:var(--t3);font-family:'IBM Plex Mono',monospace"></div>
+          </div>
+        </div>
+
+        <div class="pnl">
+          <div class="ph"><span class="pt">Generation Config</span><span class="ps"><span class="ch cb">CREDEBL</span></span></div>
+          <div class="pb">
+            <div class="fg">
+              <div class="fl">Credential Type</div>
+              <select class="fs" id="bulk_vct">
+                <option value="nat">National Identity Card</option>
+                <option value="birth">Birth Certificate</option>
+                <option value="edu">Education Certificate</option>
+                <option value="farmer">Farmer Registration</option>
+                <option value="health">Health Card</option>
+                <option value="emp">Employment Record</option>
+              </select>
+            </div>
+            <div class="fg">
+              <div class="fl">Issuer DID</div>
+              <select class="fs" id="bulk_did">
+                <option value="did:polygon:0xGovID">did:polygon:0xGovID (National ID)</option>
+                <option value="did:web:civil.gov">did:web:civil.gov (Civil Registry)</option>
+                <option value="did:polygon:0xEduMin">did:polygon:0xEduMin (Education)</option>
+                <option value="did:web:health.gov">did:web:health.gov (Health)</option>
+              </select>
+            </div>
+            <div class="fg">
+              <div class="fl">VC Format</div>
+              <select class="fs" id="bulk_fmt">
+                <option value="anoncreds">AnonCreds (ZKP)</option>
+                <option value="jsonld">JSON-LD W3C</option>
+                <option value="sdjwt">SD-JWT VC</option>
+              </select>
+            </div>
+            <div class="fg">
+              <div class="fl">Processing Speed</div>
+              <select class="fs" id="bulk_spd">
+                <option value="300">Standard (300ms/record)</option>
+                <option value="100">Fast (100ms/record)</option>
+                <option value="50">Turbo (50ms/record)</option>
+              </select>
+            </div>
+            <button class="btn bpri bw" onclick="runBulk()" id="bulkRunBtn" disabled>⊟ Generate VCs</button>
+            <button class="btn bsec bw" onclick="dlBulkResults()" id="bulkDlBtn" disabled>↓ Download Results (.xlsx)</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="pnl" id="bulkProg" style="display:none">
+        <div class="ph"><span class="pt">Processing</span><span class="ps" id="bulkPL">0 / 0</span></div>
+        <div class="pb">
+          <div class="pbar" style="height:5px"><div class="pf" style="width:0%;background:var(--gn)" id="bulkBar"></div></div>
+          <div style="display:flex;gap:10px;font-size:11px;color:var(--t3);font-family:'IBM Plex Mono',monospace">
+            <span>Total: <span id="bs_tot">0</span></span>
+            <span style="color:var(--gn)">✓ Issued: <span id="bs_done">0</span></span>
+            <span style="color:var(--re)">✗ Errors: <span id="bs_err">0</span></span>
+          </div>
+          <div id="bulkRows" style="max-height:230px;overflow-y:auto;background:var(--bg);border:1px solid var(--br);border-radius:4px"></div>
+        </div>
+      </div>
+
+      <div class="pnl" id="bulkSum" style="display:none">
+        <div class="ph"><span class="pt">Batch Summary</span><span class="ps"><span class="ch cg">Complete</span></span></div>
+        <div class="pb">
+          <div class="g4" id="bulkSumStats"></div>
+          <div class="ib" style="margin-top:2px">Output file includes <strong>VC ID, Issuer DID, QR payload</strong> per citizen. Import into SPAR for payment mapping.</div>
+          <div style="font-size:10px;color:var(--t3);font-family:'IBM Plex Mono',monospace;margin-top:6px">// Sample VC Card — from batch</div>
+          <div id="bulkVCCardPreview" style="margin-top:4px"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== WALLET ===== -->
+    <div class="view" id="view-wallet">
+      <div class="ib tl"><strong>Inji Wallet</strong> — Citizen-side credential wallet. Store VCs as visual cards, use fan view, share via QR (offline-capable), NFC, or deep link. Issue a credential first and tap "Wallet" to add it here.</div>
+      <div class="g2">
+        <div style="display:flex;justify-content:center;align-items:flex-start">
+          <div class="phone-shell" style="width:100%">
+            <div class="phone-notch"><div class="phone-camera"></div><div class="phone-speaker"></div></div>
+            <div class="phone-statusbar"><span id="phoneTime">9:41</span><span>●●● WiFi 🔒</span></div>
+            <div class="walwrap">
+              <div class="waltop">
+                <div class="walhead">
+                  <div><div class="walname" id="wname">Amara Diallo</div><div class="waldid" id="wdid">did:pkh:UIN-8421-7703-9912</div></div>
+                  <div class="walavt">👤</div>
+                </div>
+                <div class="waltabs">
+                  <div class="waltab active" onclick="swWT(this,'wt_list')">My Cards</div>
+                  <div class="waltab" onclick="swWT(this,'wt_fan')">Fan View</div>
+                  <div class="waltab" onclick="swWT(this,'wt_act')">Activity</div>
+                </div>
+              </div>
+              <div class="walbody">
+                <div id="wt_list">
+                  <div class="clabel">CREDENTIALS — <span id="wcnt">0</span> cards</div>
+                  <div class="clist" id="wclist"></div>
+                  <button class="btn bsec bw" style="margin-top:9px" onclick="openAddCred()">+ Add Credential</button>
+                </div>
+                <div id="wt_fan" style="display:none">
+                  <div class="clabel">CARD VIEW — tap to expand</div>
+                  <div class="cfan" id="wcfan"></div>
+                  <div id="wcdet"></div>
+                </div>
+                <div id="wt_act" style="display:none">
+                  <div class="clabel">RECENT ACTIVITY</div>
+                  <div id="wactlist" style="display:flex;flex-direction:column;gap:6px"></div>
+                </div>
+              </div>
+            </div>
+            <div class="phone-homeind"></div>
+          </div>
+        </div>
+
+        <div style="display:flex;flex-direction:column;gap:12px">
+          <div class="pnl">
+            <div class="ph"><span class="pt">Quick Share</span><span class="ps"><span class="ch cam">Offline-capable</span></span></div>
+            <div class="pb">
+              <div class="ib wn">Share a credential without revealing the full document. Choose disclosure method.</div>
+              <div class="fg"><div class="fl">Credential to Share</div><select class="fs" id="wshvc" onchange="updSharePrev()"></select></div>
+              <div class="fg"><div class="fl">Share Method</div>
+                <select class="fs" id="wshmth" onchange="updSharePrev()">
+                  <option value="qr">QR Code (offline-capable)</option>
+                  <option value="link">Deep Link (online)</option>
+                  <option value="nfc">NFC Tap (simulated)</option>
+                </select>
+              </div>
+              <div id="wshprev"></div>
+              <button class="btn bpri bw" onclick="shareVC()">Share →</button>
+            </div>
+          </div>
+          <div class="pnl">
+            <div class="ph"><span class="pt">Wallet Stats</span></div>
+            <div class="pb" id="wstats"></div>
+          </div>
+          <div class="pnl">
+            <div class="ph"><span class="pt">Privacy Model</span></div>
+            <div class="pb">
+              <div class="ib gn" style="font-size:11px;line-height:1.8"><strong>Holder controls data.</strong><br>
+                • VC stored locally on device — not on server<br>
+                • Selective disclosure: share only required fields<br>
+                • ZKP (AnonCreds): prove age without revealing DOB<br>
+                • Offline QR: verifier needs no internet<br>
+                • Consent screen shown before any data share
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Card Detail Modal -->
+      <div id="cardModal" class="movl" style="display:none" onclick="closeCM(event)">
+        <div class="modal" onclick="event.stopPropagation()">
+          <div class="mhdr"><span id="cmtit" style="font-size:13px;font-weight:600">Credential</span><button class="mcls" onclick="closeCM()">✕</button></div>
+          <div class="mbody" id="cmbody"></div>
+        </div>
+      </div>
+      <!-- Add Cred Modal -->
+      <div id="addCredModal" class="movl" style="display:none" onclick="closeACM(event)">
+        <div class="modal" onclick="event.stopPropagation()">
+          <div class="mhdr"><span style="font-size:13px;font-weight:600">Add Credential to Wallet</span><button class="mcls" onclick="closeACM()">✕</button></div>
+          <div class="mbody">
+            <div class="ib">Select a credential type to request from the relevant issuer.</div>
+            <div class="acgrid" id="acgrid"></div>
+            <button class="btn bpri bw" onclick="confirmAddCred()" id="acconfirm" disabled>Request Credential</button>
+            <div id="acstatus" style="font-size:11px;font-family:'IBM Plex Mono',monospace;color:var(--gn)"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== ONLINE VERIFY ===== -->
+    <div class="view" id="view-verify">
+      <div class="ib"><strong>Inji Verify</strong> — Online verification: DID resolution, cryptographic signature check, expiry, revocation, and schema validation. Issue a credential above and paste its JSON here.</div>
+      <div class="g2">
+        <div class="pnl">
+          <div class="ph"><span class="pt">Verification Request</span><span class="ps"><span class="ch cp">Inji Verify</span></span></div>
+          <div class="pb">
+            <div class="fg">
+              <div class="fl">Paste Credential (JWT / JSON-LD)</div>
+              <textarea class="fi" id="v_input" style="height:120px;font-size:10px" placeholder="Paste VC JSON or click Load Sample…"></textarea>
+            </div>
+            <button class="btn bsec bw" onclick="loadSample()">Load Sample VC</button>
+            <button class="btn bpri bw" onclick="doVerify()">◎ Verify Credential</button>
+          </div>
+        </div>
+        <div class="pnl">
+          <div class="ph"><span class="pt">Verification Result</span><span class="ps"><span class="ch cb">Online</span></span></div>
+          <div class="pb">
+            <div class="rb" id="vResult" style="min-height:120px">Result will appear here...</div>
+            <div id="vChecks" style="display:none;flex-direction:column;gap:4px">
+              <div class="sr"><div class="dot" id="vc_sig"></div><div class="sl">Cryptographic signature valid</div><span id="vc_sig_v" class="ch"></span></div>
+              <div class="sr"><div class="dot" id="vc_did"></div><div class="sl">Issuer DID resolved</div><span id="vc_did_v" class="ch"></span></div>
+              <div class="sr"><div class="dot" id="vc_exp"></div><div class="sl">Credential not expired</div><span id="vc_exp_v" class="ch"></span></div>
+              <div class="sr"><div class="dot" id="vc_rev"></div><div class="sl">Not revoked (registry check)</div><span id="vc_rev_v" class="ch"></span></div>
+              <div class="sr"><div class="dot" id="vc_schema"></div><div class="sl">Schema / context valid</div><span id="vc_schema_v" class="ch"></span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Selective Disclosure -->
+      <div class="pnl">
+        <div class="ph"><span class="pt">Selective Disclosure (AnonCreds / SD-JWT)</span><span class="ps"><span class="ch cp">Privacy-preserving</span></span></div>
+        <div class="pb">
+          <div class="g2">
+            <div style="display:flex;flex-direction:column;gap:8px">
+              <div class="ib">Verifier requests only specific fields. Holder proves them without revealing the rest. Address, phone, biometrics — NOT shared.</div>
+              <div style="display:flex;flex-direction:column;gap:7px">
+                <label style="display:flex;align-items:center;gap:8px;font-size:12px;cursor:pointer"><input type="checkbox" checked id="sd_name"> Name (required by verifier)</label>
+                <label style="display:flex;align-items:center;gap:8px;font-size:12px;cursor:pointer"><input type="checkbox" id="sd_dob"> Date of Birth</label>
+                <label style="display:flex;align-items:center;gap:8px;font-size:12px;cursor:pointer"><input type="checkbox" id="sd_age"> Age ≥ 18 (ZK proof — no DOB revealed)</label>
+                <label style="display:flex;align-items:center;gap:8px;font-size:12px;cursor:pointer"><input type="checkbox" id="sd_nat"> Nationality</label>
+                <label style="display:flex;align-items:center;gap:8px;font-size:12px;cursor:pointer"><input type="checkbox" id="sd_id"> ID Number</label>
+              </div>
+              <button class="btn bpri bw" onclick="doSelective()">Generate Selective Presentation</button>
+            </div>
+            <div class="rb" id="pexResult" style="min-height:180px">Presentation will appear here...</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== OFFLINE VERIFY ===== -->
+    <div class="view" id="view-offline-verify">
+      <div class="ib wn"><strong>Local / Offline Verification</strong> — No internet required after the initial trust store sync. The credential is embedded in the QR code as a signed payload. The verifier uses pre-cached issuer public keys to cryptographically verify — zero network calls at verification time.</div>
+
+      <div class="g3">
+        <div class="pnl">
+          <div class="ph"><span class="pt">Step 1: Sync Trust Store</span><span class="ps"><span class="ch cam">One-time online</span></span></div>
+          <div class="pb">
+            <div class="ib" style="font-size:11px">Download issuer public keys while online. Enables signature verification with no connectivity afterwards.</div>
+            <div id="trustSS" style="display:flex;flex-direction:column;gap:4px">
+              <div class="sr"><div class="dot dgr"></div><div class="sl">did:polygon:0xGovID</div><span class="ch cgr">NOT SYNCED</span></div>
+              <div class="sr"><div class="dot dgr"></div><div class="sl">did:web:civil.gov</div><span class="ch cgr">NOT SYNCED</span></div>
+              <div class="sr"><div class="dot dgr"></div><div class="sl">did:polygon:0xEduMin</div><span class="ch cgr">NOT SYNCED</span></div>
+              <div class="sr"><div class="dot dgr"></div><div class="sl">did:web:health.gov</div><span class="ch cgr">NOT SYNCED</span></div>
+            </div>
+            <button class="btn bpri bw" onclick="syncTrust()">↓ Sync Trust Store</button>
+          </div>
+        </div>
+
+        <div class="pnl">
+          <div class="ph"><span class="pt">Step 2: Generate Offline QR</span><span class="ps"><span class="ch cam">No internet needed</span></span></div>
+          <div class="pb">
+            <div class="ib" style="font-size:11px">Wallet embeds the full signed credential in a QR code. Works with zero connectivity at the point of verification.</div>
+            <div class="fg"><div class="fl">Credential Type</div>
+              <select class="fs" id="off_vc">
+                <option value="nat">National ID Card</option>
+                <option value="birth">Birth Certificate</option>
+                <option value="edu">Education Certificate</option>
+                <option value="health">Health Card</option>
+              </select>
+            </div>
+            <button class="btn bsec bw" onclick="genOfflineQR()">⊟ Generate Offline QR</button>
+            <div id="offQRD" style="margin-top:7px"></div>
+          </div>
+        </div>
+
+        <div class="pnl">
+          <div class="ph"><span class="pt">Step 3: Scan &amp; Verify Offline</span><span class="ps"><span class="ch cg">0 network calls</span></span></div>
+          <div class="pb">
+            <div class="ib" style="font-size:11px">Verifier scans QR. Signature check runs locally against cached key. Latency: ~10–20ms.</div>
+            <div style="padding-left:18px">
+              <div class="fstep d" id="fl1"><div class="fdot">✓</div><div><div style="font-size:12px;font-weight:600">Parse QR payload</div><div style="font-size:11px;color:var(--t3)">Decode base64 credential</div></div></div>
+              <div class="fstep" id="fl2"><div class="fdot">2</div><div><div style="font-size:12px;font-weight:600">Load cached issuer key</div><div style="font-size:11px;color:var(--t3)">From local trust store</div></div></div>
+              <div class="fstep" id="fl3"><div class="fdot">3</div><div><div style="font-size:12px;font-weight:600">Verify signature</div><div style="font-size:11px;color:var(--t3)">EdDSA / RSA-PSS</div></div></div>
+              <div class="fstep" id="fl4"><div class="fdot">4</div><div><div style="font-size:12px;font-weight:600">Display verified claims</div><div style="font-size:11px;color:var(--t3)">Show only what verifier requested</div></div></div>
+            </div>
+            <button class="btn bpri bw" onclick="doOfflineVerify()">📷 Scan &amp; Verify Offline</button>
+            <div id="offVR" style="margin-top:7px"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="pnl">
+        <div class="ph"><span class="pt">Why Offline Verification Matters</span></div>
+        <div class="pb">
+          <div class="g2">
+            <div class="ib" style="font-size:11px;line-height:1.9">
+              <strong>In remote or low-connectivity regions</strong> — health workers, border agents, rural officers — cannot depend on stable internet for identity checks.<br><br>
+              <strong>The solution:</strong> The signed QR contains all claims + a cryptographic proof. The verifier device synced issuer keys once. After that, verification is fully local — cryptographically equivalent to online.
+            </div>
+            <div style="display:flex;flex-direction:column;gap:6px">
+              <div class="sr"><div class="dot dg"></div><div class="sl">Zero network calls at verification time</div></div>
+              <div class="sr"><div class="dot dg"></div><div class="sl">Works offline: health clinics, border posts, elections</div></div>
+              <div class="sr"><div class="dot dg"></div><div class="sl">Cryptographically identical security to online</div></div>
+              <div class="sr"><div class="dot dg"></div><div class="sl">Privacy-preserving: verifier sees only disclosed fields</div></div>
+              <div class="sr"><div class="dot dam"></div><div class="sl">Trust store must be periodically refreshed online</div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /cnt -->
+</div><!-- /main -->
+</div><!-- /app -->
+
+<script>
+// ===== STATE =====
+const S={
+  trustSynced:false,
+  currentVC:null,
+  walletCards:[],
+  walletActs:[],
+  bulkData:[],
+  bulkResults:[]
+};
+
+// ===== NAV =====
+const TB={
+  'how-it-works':['⬡ How It Works','bb'],
+  'vc-issue':['◈ VC Issuance','bb'],
+  'bulk':['⊟ Bulk Upload','bt'],
+  'wallet':['◑ Mobile Wallet','bt'],
+  'verify':['◎ Online Verification','bp'],
+  'offline-verify':['⊛ Offline / Local Verification','bam'],
+};
+function nav(id,el){
+  document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+  document.querySelectorAll('.navi').forEach(n=>n.classList.remove('active'));
+  document.getElementById('view-'+id).classList.add('active');
+  if(el)el.classList.add('active');
+  const tb=TB[id]||['','bb'];
+  document.getElementById('tbt').textContent=tb[0];
+  document.getElementById('tbdg').className='bdg '+tb[1];
+  if(id==='wallet')renderWallet();
+}
+
+// ===== PHONE CLOCK =====
+function updatePhoneTime(){const el=document.getElementById('phoneTime');if(el)el.textContent=new Date().toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit',hour12:false});}
+setInterval(updatePhoneTime,30000);
+updatePhoneTime();
+
+// ===== LOG =====
+function log(src,msg,type='info'){
+  const now=new Date().toLocaleTimeString('en-US',{hour12:false});
+  const cls=type==='ok'?'lok':type==='er'?'ler':'linf';
+  const colors={CREDEBL:'var(--credebl)',INJI:'var(--inji)',SUNBIRD:'var(--sunbird)',MOSIP:'var(--mosip)',BULK:'var(--ac)',WALLET:'var(--gn)',SYSTEM:'var(--t2)',TRUST:'var(--am)'};
+  const color=colors[src]||'var(--t2)';
+  const el=document.getElementById('vcIL');
+  if(el){el.insertAdjacentHTML('beforeend',`<div class="ll ${cls}"><span class="lt">${now}</span><span class="lm" style="color:${color}">${src}</span><span class="lmg">${msg}</span></div>`);el.scrollTop=el.scrollHeight;}
+}
+
+// ===== VC DATA =====
+const VCD={
+  nat:        {card:'nat',   seal:'🪪', title:'National ID',                  fields:{name:'Amara Diallo',dob:'1992-04-15',gender:'Female',nationality:'TTO',idNumber:'UIN-8421-7703-9912'}},
+  birth:      {card:'birth', seal:'📋', title:'Birth Certificate',            fields:{name:'Amara Diallo',dob:'1992-04-15',placeOfBirth:'Port of Spain',regNo:'BC/1992/04821',fatherName:'David Diallo',motherName:'Marie Diallo'}},
+  marriage:   {card:'nat',   seal:'💍', title:'Marriage Certificate',         fields:{spouse1:'Amara Diallo',spouse2:'Kofi Mensah',dateOfMarriage:'2020-06-15',placeOfMarriage:'Accra',regNo:'MC/2020/00342'}},
+  death:      {card:'nat',   seal:'📜', title:'Death Certificate',            fields:{deceasedName:'Sample Name',dateOfDeath:'2026-01-10',placeOfDeath:'Lagos',causeOfDeath:'Natural',regNo:'DC/2026/00091'}},
+  edu:        {card:'edu',   seal:'🎓', title:'Education Certificate',        fields:{name:'Amara Diallo',degree:'BSc Computer Science',institution:'University of Nairobi',graduationYear:'2015',grade:'Second Class Upper'}},
+  proflicense:{card:'edu',   seal:'📇', title:'Professional Licence',         fields:{name:'Amara Diallo',profession:'Medical Doctor',licenceNo:'MD/2020/04421',issuingBody:'Medical Council',validUntil:'2027-12-31'}},
+  skills:     {card:'edu',   seal:'🛠️', title:'Skills Certificate',           fields:{name:'Amara Diallo',skill:'Solar Panel Installation',level:'Intermediate',provider:'TVET Authority',completionDate:'2025-03-01'}},
+  emp:        {card:'emp',   seal:'💼', title:'Employment Record',            fields:{name:'Amara Diallo',employer:'Ministry of Agriculture',department:'Planning',position:'Senior Officer',startDate:'2018-06-01'}},
+  farmer:     {card:'emp',   seal:'🌾', title:'Farmer Registration',          fields:{name:'Amara Diallo',farmId:'FRM-2024-08812',landSize:'2.4 ha',crop:'Maize/Sorghum',district:'Rift Valley'}},
+  g2p:        {card:'birth', seal:'🤝', title:'Social Protection Eligibility',fields:{name:'Amara Diallo',programId:'SP-2025-NG',benefitType:'Cash Transfer',monthlyAmount:'₦18,000',validUntil:'2026-12-31'}},
+  health:     {card:'health',seal:'🏥', title:'Health Card',                  fields:{name:'Amara Diallo',patientId:'HC-88421',bloodType:'O+',facilityCode:'LG-HOSP-04',allergies:'None'}},
+  vaccine:    {card:'health',seal:'💉', title:'Vaccination Record',           fields:{name:'Amara Diallo',vaccine:'COVID-19 mRNA',batchNo:'BAT-20240211',doseNumber:'2 of 2',dateAdministered:'2024-02-11',provider:'WHO COVAX'}},
+  kyc:        {card:'nat',   seal:'🏦', title:'KYC / Financial Identity',     fields:{name:'Amara Diallo',idType:'National ID',idNumber:'UIN-8421-7703-9912',riskRating:'Low',kycDate:'2025-11-01',rpId:'BANK-RP-001'}},
+  bank:       {card:'nat',   seal:'💳', title:'Bank Account Proof',           fields:{name:'Amara Diallo',bankName:'First National Bank',accountType:'Savings',accountToken:'TOK-enc-3c51b',branch:'Nairobi Central'}},
+  mdl:        {card:'nat',   seal:'🚗', title:"Driver's Licence (mDL)",       fields:{name:'Amara Diallo',licenceNo:'DL-TT-2021-44821',class:'B — Light Motor',issueDate:'2021-09-01',expiryDate:'2027-09-01',restrictions:'None'}},
+  age:        {card:'nat',   seal:'🔞', title:'Age Verification',             fields:{name:'Amara Diallo',ageOver18:'TRUE',ageOver21:'TRUE',ageOver65:'FALSE',dob:'1992-04-15'}},
+  travel:     {card:'nat',   seal:'✈️', title:'Travel Authorisation',         fields:{name:'Amara Diallo',passportNo:'TT204881A',visaType:'Single-entry',destination:'Schengen',validFrom:'2026-04-01',validTo:'2026-10-01'}},
+  sme:        {card:'emp',   seal:'🏢', title:'Business / SME Identity',      fields:{businessName:'Diallo Trading Ltd',regNo:'BIZ/2023/04421',ownerName:'Amara Diallo',businessType:'Retail',taxId:'TIN-88221-A'}},
+  supply:     {card:'emp',   seal:'📦', title:'Supply Chain Provenance',      fields:{product:'Organic Coffee Beans',origin:'Kigali, Rwanda',batchId:'BCH-2026-0041',certifiedBy:'Fair Trade Authority',carbonScore:'12 kg CO₂e/kg'}},
+  custom:     {card:'nat',   seal:'📄', title:'Custom Credential',            fields:{name:'Amara Diallo',field1:'',field2:''}},
+};
+
+const VC_SUGGESTED_FIELDS={
+  nat:[{k:'address',v:'123 Main St'},{k:'phone',v:'+234 801 234 5678'},{k:'expiryDate',v:'2031-12-31'}],
+  birth:[{k:'birthWeight',v:'3.2kg'},{k:'hospitalName',v:'General Hospital'},{k:'nationality',v:'Nigerian'}],
+  edu:[{k:'major',v:'Data Science'},{k:'gpa',v:'3.7'},{k:'honours',v:'Cum Laude'}],
+  emp:[{k:'salary',v:'REDACTED'},{k:'contractType',v:'Permanent'},{k:'endDate',v:''}],
+  farmer:[{k:'irrigationType',v:'Rain-fed'},{k:'livestock',v:'None'},{k:'subsidy',v:'Eligible'}],
+  health:[{k:'nhsId',v:''},{k:'insuranceNo',v:''},{k:'chronicConditions',v:'None'}],
+  vaccine:[{k:'nextDoseDate',v:''},{k:'adverseReaction',v:'None'}],
+  kyc:[{k:'pepStatus',v:'No'},{k:'sanctionsCheck',v:'Clear'}],
+  mdl:[{k:'vehicleClasses',v:'B,C1'},{k:'points',v:'0'}],
+  custom:[],
+};
+
+let vcEditFields={};
+
+function updateVCFields(){
+  const tp=document.getElementById('vc_type').value;
+  const customRow=document.getElementById('vc_custom_type_row');
+  if(customRow) customRow.style.display=(tp==='custom')?'flex':'none';
+  const defaults=JSON.parse(JSON.stringify((VCD[tp]||VCD.nat).fields));
+  vcEditFields={...defaults};
+  renderVCFieldEditor(tp);
+  updateVCStandards(tp);
+}
+
+function renderVCFieldEditor(type){
+  const list=document.getElementById('vc_fields_list');
+  if(!list)return;
+  const suggested=(VC_SUGGESTED_FIELDS[type]||[]).filter(s=>!(s.k in vcEditFields));
+  list.innerHTML=Object.entries(vcEditFields).map(([k,v])=>`
+    <div style="display:flex;gap:4px;align-items:center">
+      <input class="fi" value="${k}" style="flex:0 0 38%;font-size:11px;opacity:.7" readonly/>
+      <input class="fi" value="${v}" style="flex:1;font-size:11px" oninput="vcEditFields['${k}']=this.value" placeholder="value"/>
+      <button onclick="vcRemoveField('${k}')" style="background:none;border:1px solid var(--br2);border-radius:3px;color:var(--t3);padding:3px 7px;cursor:pointer;font-size:12px;flex-shrink:0">×</button>
+    </div>`).join('');
+  if(suggested.length){
+    list.insertAdjacentHTML('beforeend',`<div style="font-size:9px;color:var(--t3);font-family:'IBM Plex Mono',monospace;margin-top:4px;letter-spacing:.06em">SUGGESTED FIELDS:</div>`);
+    list.insertAdjacentHTML('beforeend',`<div style="display:flex;flex-wrap:wrap;gap:4px">${suggested.map(s=>`<button onclick="vcAddSuggested('${s.k}','${s.v.replace(/'/g,"\\'")}')" style="font-size:9px;padding:2px 7px;border:1px solid var(--br2);border-radius:3px;background:var(--sf2);color:var(--t2);cursor:pointer;font-family:'IBM Plex Mono',monospace">+ ${s.k}</button>`).join('')}</div>`);
+  }
+}
+function vcAddSuggested(k,v){vcEditFields[k]=v;renderVCFieldEditor(document.getElementById('vc_type').value);}
+function vcRemoveField(k){delete vcEditFields[k];renderVCFieldEditor(document.getElementById('vc_type').value);}
+function vcAddField(){
+  const k=(document.getElementById('vc_new_field_key').value||'').trim();
+  const v=(document.getElementById('vc_new_field_val').value||'').trim();
+  if(!k)return;
+  vcEditFields[k]=v;
+  document.getElementById('vc_new_field_key').value='';
+  document.getElementById('vc_new_field_val').value='';
+  renderVCFieldEditor(document.getElementById('vc_type').value);
+}
+function syncCustomTypeName(){const n=(document.getElementById('vc_custom_type_name').value||'').trim();if(n)VCD.custom.title=n;}
+
+function issueVC(typeOverride,uinOverride,nameOverride){
+  const type=typeOverride||document.getElementById('vc_type').value;
+  const uin=uinOverride||document.getElementById('vc_uin').value||'UIN-DEMO-0001';
+  const issuerDid=document.getElementById('vc_did').value;
+  const format=document.getElementById('vc_format').value;
+  const vcId='vc:'+Math.random().toString(36).slice(2,10);
+  const now=new Date().toISOString();
+  const vd=JSON.parse(JSON.stringify(VCD[type]||VCD.nat));
+  if(!typeOverride&&Object.keys(vcEditFields).length)vd.fields={...vcEditFields};
+  if(nameOverride)vd.fields.name=nameOverride;
+  if(type==='custom'){const cn=(document.getElementById('vc_custom_type_name')||{}).value;if(cn)vd.title=cn;}
+  const typeLabel=vd.title.replace(/[\s/()&]+/g,'')+'Credential';
+  const proofType=format==='anoncreds'?'AnonCredProof2023':format==='sdjwt'?'SdJwtProof2023':'Ed25519Signature2020';
+  const vcJson={
+    '@context':['https://www.w3.org/2018/credentials/v1','https://www.w3.org/2018/credentials/examples/v1'],
+    id:vcId,
+    type:['VerifiableCredential',typeLabel],
+    issuer:{id:issuerDid,name:'DPI Sandbox Issuer'},
+    issuanceDate:now,
+    expirationDate:new Date(Date.now()+5*365*24*3.6e6).toISOString(),
+    credentialSubject:{id:'did:pkh:'+uin,...vd.fields},
+    proof:{type:proofType,created:now,verificationMethod:issuerDid+'#key-1',proofPurpose:'assertionMethod',jws:'eyJhbGciOiJFZERTQSJ9..SIMULATED_SIGNATURE_'+Math.random().toString(36).slice(2,10)}
+  };
+  S.currentVC=vcJson;
+  if(!typeOverride){
+    const vi=document.getElementById('v_input');if(vi)vi.value=JSON.stringify(vcJson,null,2);
+    document.getElementById('vcPrev').innerHTML=renderVCCard(vd,vcId);
+    document.getElementById('vc_fmtb').innerHTML=`<span class="ch cb">${format.toUpperCase()}</span>`;
+    ['vcJBtn','vcQBtn','vcWBtn','vcDlBtn'].forEach(id=>{const b=document.getElementById(id);if(b)b.disabled=false;});
+    document.getElementById('vcQRD').style.display='none';
+    document.getElementById('vcJSD').style.display='none';
+    const ts=new Date().toLocaleTimeString('en-US',{hour12:false});
+    document.getElementById('vcIL').insertAdjacentHTML('beforeend',`<div class="ll lok"><span class="lt">${ts}</span><span class="lm" style="color:var(--credebl)">CREDEBL</span><span class="lmg">✓ VC issued: ${vcId} [${vd.title}] format:${format}</span></div>`);
+    updateVCStandards(type);
+  }
+  log('CREDEBL',`VC: ${vd.title} for ${uin}`,'ok');
+  return vcJson;
+}
+
+function renderVCCard(vd,vcId){
+  const fields=Object.entries(vd.fields||{}).slice(0,4);
+  return `<div class="vcc ${vd.card} si"><div class="vch"><div><div class="vcis">Verified Credential</div><div class="vcty">${vd.title}</div></div><div class="vcsl">${vd.seal}</div></div><div class="vcflds">${fields.map(([k,v])=>`<div><div class="vcfl">${k}</div><div class="vcfv">${v}</div></div>`).join('')}</div><div class="vcft"><div class="vcdid">${vcId||'vc:...'}</div><div class="vcver">✓ Signed</div></div></div>`;
+}
+
+function showVCQR(){document.getElementById('vcJSD').style.display='none';document.getElementById('vcQRD').style.display='block';drawQR(document.getElementById('vcQRC'));}
+function showVCJson(){document.getElementById('vcQRD').style.display='none';document.getElementById('vcJSD').style.display='block';document.getElementById('vcRJ').textContent=JSON.stringify(S.currentVC,null,2);}
+
+function addToWallet(){
+  if(!S.currentVC)return;
+  const t=document.getElementById('vc_type').value;
+  const vd=JSON.parse(JSON.stringify(VCD[t]||VCD.nat));
+  if(Object.keys(vcEditFields).length)vd.fields={...vcEditFields};
+  if(t==='custom'){const cn=(document.getElementById('vc_custom_type_name')||{}).value;if(cn)vd.title=cn;}
+  S.walletCards.push({id:S.currentVC.id,type:t,...vd,added:new Date().toLocaleTimeString()});
+  S.walletActs.unshift({icon:'➕',text:`${vd.title} added to wallet`,time:new Date().toLocaleTimeString()});
+  log('WALLET',`Card added: ${vd.title}`,'ok');
+  alert(`✓ "${vd.title}" added to your Digital Wallet! Go to Mobile Wallet to view it.`);
+}
+
+function dlVC(){
+  if(!S.currentVC)return;
+  const blob=new Blob([JSON.stringify(S.currentVC,null,2)],{type:'application/json'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);
+  a.download=`vc_${S.currentVC.id||'credential'}_${new Date().toISOString().split('T')[0]}.json`;
+  a.click();
+  log('CREDEBL','VC downloaded as JSON','ok');
+}
+
+// ===== QR RENDERER =====
+function drawQR(canvas,sz=120){
+  const ctx=canvas.getContext('2d'),b=5,cols=Math.floor(sz/b);
+  canvas.width=sz;canvas.height=sz;
+  ctx.fillStyle='#0a0f1a';ctx.fillRect(0,0,sz,sz);
+  ctx.fillStyle='#00d4ff';
+  for(let i=0;i<cols;i++)for(let j=0;j<cols;j++)
+    if(Math.random()>.55||(i<3&&j<3)||(i>cols-4&&j<3)||(i<3&&j>cols-4))
+      ctx.fillRect(i*b+1,j*b+1,b-1,b-1);
+  [[0,0],[cols-7,0],[0,cols-7]].forEach(([x,y])=>{
+    ctx.fillStyle='#0a0f1a';ctx.fillRect(x*b,y*b,7*b,7*b);
+    ctx.fillStyle='#00d4ff';ctx.fillRect(x*b,y*b,7*b,7*b);
+    ctx.fillStyle='#0a0f1a';ctx.fillRect((x+1)*b,(y+1)*b,5*b,5*b);
+    ctx.fillStyle='#00d4ff';ctx.fillRect((x+2)*b,(y+2)*b,3*b,3*b);
+  });
+}
+
+// ===== VERIFY =====
+function loadSample(){
+  document.getElementById('v_input').value=JSON.stringify({
+    '@context':['https://www.w3.org/2018/credentials/v1'],
+    id:'vc:sample-001',type:['VerifiableCredential','NationalIdentityCredential'],
+    issuer:{id:'did:polygon:0xGovID'},
+    issuanceDate:'2026-01-15T00:00:00Z',
+    expirationDate:'2031-01-15T00:00:00Z',
+    credentialSubject:{id:'did:pkh:UIN-8421-7703-9912',name:'Amara Diallo',dob:'1992-04-15',gender:'Female',nationality:'TTO'},
+    proof:{type:'Ed25519Signature2020',jws:'eyJhbGci...SAMPLE'}
+  },null,2);
+}
+
+function doVerify(){
+  let vc;const res=document.getElementById('vResult'),chk=document.getElementById('vChecks');
+  try{vc=JSON.parse(document.getElementById('v_input').value);}
+  catch(e){res.className='rb er';res.textContent='✗ Invalid JSON — paste a valid VC';return;}
+  const ok={sig:Math.random()>.05,did:true,exp:vc.expirationDate?new Date(vc.expirationDate)>new Date():true,rev:Math.random()>.02,schema:!!vc['@context']};
+  const pass=Object.values(ok).every(Boolean);
+  res.className='rb '+(pass?'ok':'er')+' si';
+  res.textContent=`${pass?'✓ CREDENTIAL VERIFIED':'✗ VERIFICATION FAILED'}\n━━━━━━━━━━━━━━━━━━━━━━━━\nIssuer:  ${vc.issuer?.id||'?'}\nSubject: ${vc.credentialSubject?.name||vc.credentialSubject?.id||'?'}\nType:    ${(vc.type||[]).join(', ')}\nMode:    ONLINE (DID resolved via Inji Verify)\nLatency: ${Math.floor(Math.random()*80)+20}ms`;
+  chk.style.display='flex';chk.style.flexDirection='column';chk.style.gap='4px';
+  const sc=(id,isOk)=>{
+    document.getElementById('vc_'+id).className='dot '+(isOk?'dg':'dr');
+    document.getElementById('vc_'+id+'_v').textContent=isOk?'PASS':'FAIL';
+    document.getElementById('vc_'+id+'_v').className='ch '+(isOk?'cg':'cre');
+  };
+  ['sig','did','exp','rev','schema'].forEach(id=>sc(id,ok[id]));
+  log('INJI',`Verify: ${pass?'PASS':'FAIL'} — ${vc.issuer?.id}`,pass?'ok':'er');
+}
+
+function doSelective(){
+  const r=[];
+  if(document.getElementById('sd_name').checked)r.push('name');
+  if(document.getElementById('sd_dob').checked)r.push('dob');
+  if(document.getElementById('sd_age').checked)r.push('age_over_18_ZK');
+  if(document.getElementById('sd_nat').checked)r.push('nationality');
+  if(document.getElementById('sd_id').checked)r.push('idNumber');
+  const d={};
+  if(r.includes('name'))d.name='Amara Diallo';
+  if(r.includes('dob'))d.dob='1992-04-15';
+  if(r.includes('age_over_18_ZK'))d.age_over_18=true;
+  if(r.includes('nationality'))d.nationality='TTO';
+  if(r.includes('idNumber'))d.idNumber='UIN-8421-7703-9912';
+  document.getElementById('pexResult').className='rb ok si';
+  document.getElementById('pexResult').textContent=`✓ SELECTIVE PRESENTATION GENERATED\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\nDisclosed: ${r.length} field(s)  |  Withheld: ${5-r.length}\n\n${JSON.stringify({type:'VerifiablePresentation',holder:'did:pkh:UIN-8421-7703-9912',disclosedAttributes:d,withheldFields:['address','phone','photo','biometrics'],proof:{type:'AnonCredProof2023',nonce:Math.random().toString(36).slice(2)}},null,2)}\n\n// Address, phone, biometrics — NOT included`;
+  log('INJI',`Selective disclosure: ${r.length} fields revealed`,'ok');
+}
+
+// ===== OFFLINE VERIFY =====
+const TRUST_DIDS=['did:polygon:0xGovID','did:web:civil.gov','did:polygon:0xEduMin','did:web:health.gov'];
+
+function syncTrust(){
+  const rows=document.getElementById('trustSS').children;
+  let i=0;
+  const next=()=>{
+    if(i<TRUST_DIDS.length){
+      rows[i].innerHTML=`<div class="dot dam pls"></div><div class="sl">${TRUST_DIDS[i]}</div><span class="ch cam">SYNCING...</span>`;
+      setTimeout(()=>{
+        rows[i].innerHTML=`<div class="dot dg"></div><div class="sl">${TRUST_DIDS[i]}</div><span class="ch cg">SYNCED ✓</span>`;
+        log('TRUST','Key synced: '+TRUST_DIDS[i],'ok');
+        i++;next();
+      },650);
+    } else {
+      S.trustSynced=true;
+      log('TRUST','Trust store ready. 4 issuer keys cached.','ok');
+    }
+  };
+  next();
+}
+
+function genOfflineQR(){
+  if(!S.trustSynced){
+    document.getElementById('offQRD').innerHTML='<div class="rb er" style="margin-top:5px">⚠ Sync trust store first (Step 1)</div>';
+    return;
+  }
+  const c=document.createElement('canvas');c.width=110;c.height=110;drawQR(c,110);
+  const d=document.getElementById('offQRD');d.innerHTML='';
+  const wrap=document.createElement('div');wrap.className='qrb';
+  wrap.appendChild(c);
+  const lbl=document.createElement('div');lbl.style.cssText='font-size:10px;color:var(--t3)';
+  lbl.textContent='Signed QR — offline-capable';
+  wrap.appendChild(lbl);
+  const note=document.createElement('div');note.style.cssText='font-size:9px;color:var(--gn);font-family:IBM Plex Mono,monospace;margin-top:2px';
+  note.textContent='✓ Full credential + proof embedded';
+  wrap.appendChild(note);
+  d.appendChild(wrap);
+  log('SYSTEM','Offline QR generated for '+document.getElementById('off_vc').value,'ok');
+}
+
+function doOfflineVerify(){
+  if(!S.trustSynced){document.getElementById('offVR').innerHTML='<div class="rb er">⚠ Sync trust store first</div>';return;}
+  document.getElementById('offVR').innerHTML='<div style="font-size:11px;color:var(--ac);font-family:\'IBM Plex Mono\',monospace" class="pls">Scanning QR...</div>';
+  const flows=['fl2','fl3','fl4'];let fi=0;
+  const adv=()=>{
+    if(fi<flows.length){
+      document.getElementById(flows[fi]).className='fstep a';
+      if(fi>0)document.getElementById(flows[fi-1]).className='fstep d';
+      fi++;setTimeout(adv,700);
+    } else {
+      flows.forEach(f=>document.getElementById(f).className='fstep d');
+      const type=document.getElementById('off_vc').value;
+      const vd=VCD[type]||VCD.nat;
+      document.getElementById('offVR').innerHTML=`<div class="rb ok si">✓ VERIFIED OFFLINE\n━━━━━━━━━━━━━━━━━━━━━━━━\nSignature: Ed25519 — VALID\nIssuer:    ${type==='nat'?'did:polygon:0xGovID':type==='edu'?'did:polygon:0xEduMin':'did:web:civil.gov'} (cached key)\nSubject:   ${vd.fields.name||'Unknown'}\nNetwork calls: 0\nLatency: ${Math.floor(Math.random()*12)+8}ms\n\nVerified at: ${new Date().toLocaleTimeString()}</div>`;
+      log('INJI','Offline verify PASS — 0 network calls','ok');
+    }
+  };
+  setTimeout(adv,500);
+}
+
+// ===== BULK UPLOAD =====
+const SAMPLE_CITIZENS=[
+  {name:'Fatou Diallo',dob:'1990-03-15',gender:'Female',phone:'+221 77 123 4567',document_type:'Birth Certificate',document_number:'BC/1990/00121'},
+  {name:'Moussa Traoré',dob:'1985-07-22',gender:'Male',phone:'+221 77 234 5678',document_type:'Voter Card',document_number:'VCE/1985/00432'},
+  {name:'Aïssatou Bah',dob:'1998-11-05',gender:'Female',phone:'+221 77 345 6789',document_type:'Passport',document_number:'PP/1998/00543'},
+  {name:'Ibrahim Konaté',dob:'1975-01-30',gender:'Male',phone:'+221 77 456 7890',document_type:'Birth Certificate',document_number:'BC/1975/00654'},
+  {name:'Mariama Sow',dob:'2000-06-18',gender:'Female',phone:'+221 77 567 8901',document_type:'Community Attestation',document_number:'CA/2000/00765'},
+  {name:'Ousmane Diop',dob:'1993-09-12',gender:'Male',phone:'+221 77 678 9012',document_type:'Voter Card',document_number:'VCE/1993/00876'},
+  {name:'Coumba Fall',dob:'1987-04-28',gender:'Female',phone:'+221 77 789 0123',document_type:'Birth Certificate',document_number:'BC/1987/00987'},
+  {name:'Amadou Ndiaye',dob:'1970-12-03',gender:'Male',phone:'+221 77 890 1234',document_type:'Passport',document_number:'PP/1970/01098'},
+  {name:'Rokhaya Gaye',dob:'2003-08-25',gender:'Female',phone:'+221 77 901 2345',document_type:'Birth Certificate',document_number:'BC/2003/01209'},
+  {name:'Lamine Sarr',dob:'1982-05-14',gender:'Male',phone:'+221 77 012 3456',document_type:'Voter Card',document_number:'VCE/1982/01310'},
+];
+
+function rnd(n){return String(Math.floor(Math.random()*Math.pow(10,n))).padStart(n,'0');}
+
+function loadSampleBulk(){
+  S.bulkData=[...SAMPLE_CITIZENS];
+  document.getElementById('bulkFI').textContent='✓ Sample dataset loaded: 10 citizens ready for VC generation';
+  document.getElementById('bulkRunBtn').disabled=false;
+  log('BULK','Sample dataset loaded: 10 citizens');
+}
+
+function dlTemplate(){
+  if(!window.XLSX){alert('XLSX loading...');return;}
+  const ws=XLSX.utils.json_to_sheet([{name:'',dob:'YYYY-MM-DD',gender:'Male/Female',phone:'',document_type:'',document_number:''}]);
+  const wb=XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb,ws,'Citizens');
+  XLSX.writeFile(wb,'dpi_vc_bulk_template.xlsx');
+  log('BULK','Template downloaded');
+}
+
+function dzOver(e){e.preventDefault();document.getElementById('dropZ').classList.add('drag');}
+function dzLeave(){document.getElementById('dropZ').classList.remove('drag');}
+function dzDrop(e){e.preventDefault();dzLeave();handleFile(e.dataTransfer.files[0]);}
+
+function handleFile(file){
+  if(!file)return;
+  const ext=file.name.split('.').pop().toLowerCase();
+  document.getElementById('dropZ').classList.remove('drag');
+  if(ext==='csv'){const r=new FileReader();r.onload=e=>parseCSV(e.target.result,file.name);r.readAsText(file);}
+  else if(ext==='xlsx'||ext==='xls'){const r=new FileReader();r.onload=e=>parseXLSX(e.target.result,file.name);r.readAsArrayBuffer(file);}
+  else alert('Unsupported format. Use .xlsx or .csv');
+}
+
+function parseCSV(text,name){
+  const lines=text.trim().split('\n'),hdrs=lines[0].split(',').map(h=>h.trim().toLowerCase().replace(/\s+/g,'_'));
+  S.bulkData=lines.slice(1).map(line=>{
+    const vals=line.split(',').map(v=>v.trim().replace(/^"|"$/g,''));
+    const row={};hdrs.forEach((h,i)=>row[h]=vals[i]||'');
+    return{name:row.name||'Unknown',dob:row.dob||'1990-01-01',gender:row.gender||'Unknown',phone:row.phone||'',document_type:row.document_type||'ID',document_number:row.document_number||''};
+  });
+  document.getElementById('bulkFI').textContent=`✓ ${name}: ${S.bulkData.length} rows`;
+  document.getElementById('bulkRunBtn').disabled=false;
+  log('BULK',`${name}: ${S.bulkData.length} records loaded`);
+}
+
+function parseXLSX(buffer,name){
+  if(!window.XLSX){alert('XLSX library not loaded yet');return;}
+  const wb=XLSX.read(buffer,{type:'array'}),ws=wb.Sheets[wb.SheetNames[0]];
+  const rows=XLSX.utils.sheet_to_json(ws,{defval:''});
+  S.bulkData=rows.map(r=>({
+    name:r.name||r.Name||'Unknown',dob:r.dob||r.DOB||'1990-01-01',
+    gender:r.gender||r.Gender||'Unknown',phone:r.phone||r.Phone||'',
+    document_type:r.document_type||r['Document Type']||'ID',
+    document_number:r.document_number||r['Document Number']||''
+  }));
+  document.getElementById('bulkFI').textContent=`✓ ${name}: ${S.bulkData.length} rows`;
+  document.getElementById('bulkRunBtn').disabled=false;
+  log('BULK',`${name}: ${S.bulkData.length} records`);
+}
+
+function runBulk(){
+  if(!S.bulkData.length)return;
+  const speed=parseInt(document.getElementById('bulk_spd').value);
+  S.bulkResults=[];
+  document.getElementById('bulkProg').style.display='block';
+  document.getElementById('bulkSum').style.display='none';
+  document.getElementById('bulkRows').innerHTML='';
+  document.getElementById('bs_tot').textContent=S.bulkData.length;
+  document.getElementById('bs_done').textContent=0;
+  document.getElementById('bs_err').textContent=0;
+  document.getElementById('bulkRunBtn').disabled=true;
+  let done=0,errs=0;
+  const next=i=>{
+    if(i>=S.bulkData.length){finishBulk(S.bulkData.length,errs);return;}
+    const row=S.bulkData[i],fail=Math.random()<0.03;
+    setTimeout(()=>{
+      const vcId=fail?null:'vc:'+Math.random().toString(36).slice(2,10);
+      if(!fail){S.bulkResults.push({...row,vcId,status:'issued'});done++;}
+      else{S.bulkResults.push({...row,vcId:null,status:'error'});errs++;}
+      document.getElementById('bulkRows').insertAdjacentHTML('beforeend',
+        `<div class="uprow"><span class="upname">${row.name}</span><span class="upuin" style="color:${fail?'var(--re)':'var(--ac)'}">${vcId||'ERROR: dedup/sign failed'}</span><span class="upst"><span class="ch ${fail?'cre':'cg'}">${fail?'ERROR':'ISSUED'}</span></span></div>`);
+      const el=document.getElementById('bulkRows');el.scrollTop=el.scrollHeight;
+      const pct=Math.round(((i+1)/S.bulkData.length)*100);
+      document.getElementById('bulkBar').style.width=pct+'%';
+      document.getElementById('bulkPL').textContent=`${i+1} / ${S.bulkData.length}`;
+      document.getElementById('bs_done').textContent=done;
+      document.getElementById('bs_err').textContent=errs;
+      log('BULK',`[${i+1}/${S.bulkData.length}] ${row.name}: ${fail?'SIGN ERROR':'VC '+vcId}`,fail?'er':'ok');
+      next(i+1);
+    },speed);
+  };
+  next(0);
+}
+
+function finishBulk(total,errs){
+  document.getElementById('bulkRunBtn').disabled=false;
+  document.getElementById('bulkDlBtn').disabled=false;
+  document.getElementById('bulkSum').style.display='block';
+  document.getElementById('bulkSumStats').innerHTML=
+    `<div class="stcard"><div class="stval">${total}</div><div class="stlb">Total Records</div></div>
+     <div class="stcard"><div class="stval" style="color:var(--gn)">${total-errs}</div><div class="stlb">VCs Issued</div></div>
+     <div class="stcard"><div class="stval" style="color:var(--gn)">${total-errs}</div><div class="stlb">QR Payloads</div></div>
+     <div class="stcard"><div class="stval" style="color:var(--re)">${errs}</div><div class="stlb">Errors</div></div>`;
+  log('BULK',`Batch complete: ${total-errs}/${total} VCs issued`,'ok');
+  setTimeout(showBulkVCCard,200);
+}
+
+function showBulkVCCard(){
+  const preview=document.getElementById('bulkVCCardPreview');
+  if(!preview||!S.bulkResults.length)return;
+  const sample=S.bulkResults.find(r=>r.status==='issued')||S.bulkResults[0];
+  const type=document.getElementById('bulk_vct').value;
+  const vd=JSON.parse(JSON.stringify(VCD[type]||VCD.nat));
+  if(sample.name)vd.fields.name=sample.name;
+  const vcId=sample.vcId||'vc:sample';
+  preview.innerHTML=renderVCCard(vd,vcId);
+}
+
+function dlBulkResults(){
+  if(!S.bulkResults.length)return;
+  if(!window.XLSX){alert('XLSX not loaded');return;}
+  const data=S.bulkResults.map(r=>({
+    Name:r.name,DOB:r.dob,Gender:r.gender,Phone:r.phone,
+    Document_Type:r.document_type,Document_Number:r.document_number,
+    VC_ID:r.vcId||'ERROR',Issuer_DID:document.getElementById('bulk_did').value,
+    VC_Format:document.getElementById('bulk_fmt').value,
+    Credential_Type:document.getElementById('bulk_vct').value,
+    Status:r.status,Generated:new Date().toISOString()
+  }));
+  const ws=XLSX.utils.json_to_sheet(data),wb=XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb,ws,'VC_Results');
+  XLSX.writeFile(wb,`vc_bulk_results_${new Date().toISOString().split('T')[0]}.xlsx`);
+  log('BULK',`Exported ${data.length} records`,'ok');
+}
+
+// ===== WALLET =====
+const CARD_BG={nat:'#0f1f3d',birth:'#0f2918',edu:'#1f0f3d',emp:'#1f1505',health:'#0f1f2d'};
+const DEFAULT_CARDS=[
+  {id:'vc:nat-001',type:'nat',...JSON.parse(JSON.stringify(VCD.nat)),added:'09:00'},
+  {id:'vc:birth-001',type:'birth',...JSON.parse(JSON.stringify(VCD.birth)),added:'09:01'},
+  {id:'vc:edu-001',type:'edu',...JSON.parse(JSON.stringify(VCD.edu)),added:'09:02'},
+  {id:'vc:health-001',type:'health',...JSON.parse(JSON.stringify(VCD.health)),added:'09:03'},
+];
+const DEFAULT_ACTS=[
+  {icon:'✅',text:'National ID verified at Airport Border Control',time:'08:45'},
+  {icon:'📤',text:'Birth Certificate shared with Civil Registry',time:'Yesterday'},
+  {icon:'➕',text:'Health Card added to wallet',time:'2 days ago'},
+  {icon:'🔍',text:'Education Certificate viewed by recruiter',time:'1 week ago'},
+];
+
+function renderWallet(){
+  if(!S.walletCards.length)S.walletCards=JSON.parse(JSON.stringify(DEFAULT_CARDS));
+  if(!S.walletActs.length)S.walletActs=[...DEFAULT_ACTS];
+  renderCardList();renderCardFan();renderWalletActs();renderWalletStats();renderShareSel();
+}
+
+function renderCardList(){
+  document.getElementById('wcnt').textContent=S.walletCards.length;
+  document.getElementById('wclist').innerHTML=S.walletCards.map((c,i)=>`
+    <div class="cli">
+      <div class="cliicon" style="background:${CARD_BG[c.type]||'#1a2235'}">${c.seal}</div>
+      <div class="climeta"><div class="cliname">${c.title}</div><div class="cliiss">${Object.values(c.fields||{})[0]||''} &bull; added ${c.added}</div></div>
+      <div class="cliact">
+        <button class="ca" onclick="openCardDetail(${i})">View</button>
+        <button class="ca share" onclick="openCardDetail(${i})">Share</button>
+      </div>
+    </div>`).join('');
+}
+
+function renderCardFan(){
+  const fan=document.getElementById('wcfan'),n=S.walletCards.length,maxR=14,maxT=8;
+  fan.innerHTML=S.walletCards.map((c,i)=>{
+    const pct=n>1?i/(n-1):0,rot=-maxR/2+pct*maxR,tx=-maxT/2+pct*maxT,ty=Math.abs(rot)*0.6,z=i+1;
+    const fields=Object.entries(c.fields||{}).slice(0,2);
+    return `<div class="cfi" style="z-index:${z};transform:rotate(${rot}deg) translate(${tx}px,${-ty}px)" onclick="selectFanCard(${i})">
+      <div class="vcc ${c.card}" style="height:155px">
+        <div class="vch"><div><div class="vcis">Verified Credential</div><div class="vcty" style="font-size:12px">${c.title}</div></div><div class="vcsl">${c.seal}</div></div>
+        <div class="vcflds">${fields.map(([k,v])=>`<div><div class="vcfl">${k}</div><div class="vcfv" style="font-size:10px">${v}</div></div>`).join('')}</div>
+        <div class="vcft"><div class="vcdid" style="font-size:7px">${c.id}</div><div class="vcver">✓</div></div>
+      </div></div>`;
+  }).join('');
+}
+
+function selectFanCard(i){const c=S.walletCards[i];document.getElementById('wcdet').innerHTML=renderVCCard({card:c.card,seal:c.seal,title:c.title,fields:c.fields||{}},c.id);}
+
+function renderWalletActs(){
+  document.getElementById('wactlist').innerHTML=S.walletActs.slice(0,8).map(a=>
+    `<div class="sr"><span style="font-size:15px;flex-shrink:0">${a.icon}</span><span class="sl">${a.text}</span><span style="font-size:10px;color:var(--t3);font-family:'IBM Plex Mono',monospace;white-space:nowrap">${a.time}</span></div>`).join('');
+}
+
+function renderWalletStats(){
+  document.getElementById('wstats').innerHTML=
+    `<div class="sr"><div class="dot dg"></div><div class="sl">Credentials stored</div><strong>${S.walletCards.length}</strong></div>
+     <div class="sr"><div class="dot dg"></div><div class="sl">Shares this month</div><strong>${S.walletActs.filter(a=>a.icon==='📤').length}</strong></div>
+     <div class="sr"><div class="dot db"></div><div class="sl">Verifications received</div><strong>${S.walletActs.filter(a=>a.icon==='✅').length}</strong></div>
+     <div class="sr"><div class="dot dam"></div><div class="sl">Offline-ready QRs</div><strong>${S.walletCards.length}</strong></div>`;
+}
+
+function renderShareSel(){
+  const sel=document.getElementById('wshvc');
+  sel.innerHTML=S.walletCards.map((c,i)=>`<option value="${i}">${c.seal} ${c.title}</option>`).join('');
+  updSharePrev();
+}
+
+function updSharePrev(){
+  const i=parseInt(document.getElementById('wshvc').value)||0;
+  const mth=document.getElementById('wshmth').value;
+  const c=S.walletCards[i]||S.walletCards[0];
+  if(!c)return;
+  const prev=document.getElementById('wshprev');
+  if(mth==='qr'){
+    const canvas=document.createElement('canvas');canvas.width=90;canvas.height=90;drawQR(canvas,90);
+    const d=document.createElement('div');d.className='qrb';d.style.padding='10px';
+    d.appendChild(canvas);
+    const lbl=document.createElement('div');lbl.style.cssText='font-size:10px;color:var(--t3)';lbl.textContent='Offline QR — '+c.title;
+    d.appendChild(lbl);prev.innerHTML='';prev.appendChild(d);
+  } else if(mth==='link'){
+    prev.innerHTML=`<div class="rb" style="font-size:10px;word-break:break-all">https://verify.cdpi.dev/vc/${c.id}?fields=name,dob&exp=3600</div>`;
+  } else {
+    prev.innerHTML='<div class="ib"><strong>NFC</strong> — Hold devices together. Range: ~4cm. Encrypted in-transit.</div>';
+  }
+}
+
+function shareVC(){
+  const i=parseInt(document.getElementById('wshvc').value)||0;
+  const c=S.walletCards[i]||S.walletCards[0];
+  const mth=document.getElementById('wshmth').value;
+  S.walletActs.unshift({icon:'📤',text:`${c.title} shared via ${mth.toUpperCase()}`,time:new Date().toLocaleTimeString()});
+  renderWalletActs();renderWalletStats();
+  log('WALLET',`Shared: ${c.title} via ${mth}`,'ok');
+}
+
+function swWT(tab,panelId){
+  document.querySelectorAll('.waltab').forEach(t=>t.classList.remove('active'));
+  tab.classList.add('active');
+  ['wt_list','wt_fan','wt_act'].forEach(id=>{document.getElementById(id).style.display=id===panelId?'block':'none';});
+}
+
+function openCardDetail(i){
+  const c=S.walletCards[i];
+  document.getElementById('cmtit').textContent=c.title;
+  const canvas=document.createElement('canvas');canvas.width=120;canvas.height=120;drawQR(canvas);
+  document.getElementById('cmbody').innerHTML=renderVCCard({card:c.card,seal:c.seal,title:c.title,fields:c.fields||{}},c.id);
+  const qrs=document.createElement('div');qrs.className='qrs';
+  const ql=document.createElement('div');ql.style.cssText='font-size:11px;color:var(--t3);font-weight:600';ql.textContent='Offline QR — scan to verify without internet';
+  qrs.appendChild(canvas);qrs.appendChild(ql);
+  const shopts=document.createElement('div');shopts.className='shopts';
+  [['📲','NFC Tap'],['🔗','Copy Link'],['💾','Save PDF'],['📧','Email']].forEach(([ic,lb])=>{
+    const b=document.createElement('div');b.className='shbtn';
+    b.innerHTML=`<span class="ic">${ic}</span>${lb}`;
+    b.onclick=()=>{S.walletActs.unshift({icon:'📤',text:`${c.title} shared via ${lb}`,time:new Date().toLocaleTimeString()});renderWalletActs();renderWalletStats();};
+    shopts.appendChild(b);
+  });
+  qrs.appendChild(shopts);
+  document.getElementById('cmbody').appendChild(qrs);
+  document.getElementById('cardModal').style.display='flex';
+}
+function closeCM(e){if(!e||e.target===document.getElementById('cardModal'))document.getElementById('cardModal').style.display='none';}
+
+function openAddCred(){
+  const OPTS=[
+    {type:'nat',icon:'🪪',name:'National ID',issuer:'National ID Authority'},
+    {type:'birth',icon:'📋',name:'Birth Certificate',issuer:'Civil Registry'},
+    {type:'edu',icon:'🎓',name:'Education Cert',issuer:'Ministry of Education'},
+    {type:'emp',icon:'💼',name:'Employment Record',issuer:'Ministry of Labour'},
+    {type:'health',icon:'🏥',name:'Health Card',issuer:'Ministry of Health'},
+    {type:'farmer',icon:'🌾',name:'Farmer Registration',issuer:'Ministry of Agriculture'},
+  ];
+  document.getElementById('acgrid').innerHTML=OPTS.map((o,i)=>
+    `<div class="acopt" onclick="selAC(this,'${o.type}')"><div class="aci">${o.icon}</div><div class="acn">${o.name}</div><div class="acis">${o.issuer}</div></div>`).join('');
+  document.getElementById('acconfirm').disabled=true;
+  document.getElementById('acstatus').textContent='';
+  document.getElementById('addCredModal').style.display='flex';
+}
+function selAC(el,type){document.querySelectorAll('.acopt').forEach(e=>e.classList.remove('sel'));el.classList.add('sel');document.getElementById('acconfirm').disabled=false;document.getElementById('acconfirm').dataset.type=type;}
+function confirmAddCred(){
+  const type=document.getElementById('acconfirm').dataset.type;
+  const vd=VCD[type]||{card:'nat',seal:'📄',title:type+' Credential',fields:{name:'Amara Diallo'}};
+  S.walletCards.push({id:'vc:'+Math.random().toString(36).slice(2,10),...JSON.parse(JSON.stringify(vd)),type,added:new Date().toLocaleTimeString()});
+  S.walletActs.unshift({icon:'➕',text:`${vd.title} added`,time:new Date().toLocaleTimeString()});
+  document.getElementById('acstatus').textContent=`✓ ${vd.title} added to wallet!`;
+  document.getElementById('acconfirm').disabled=true;
+  setTimeout(()=>{closeACM();renderWallet();},900);
+  log('WALLET',`Added: ${vd.title}`,'ok');
+}
+function closeACM(e){if(!e||e.target===document.getElementById('addCredModal'))document.getElementById('addCredModal').style.display='none';}
+
+// ===== VC STANDARDS =====
+const VC_STANDARDS={
+  nat:{label:'National Identity',standards:[
+    {name:'W3C VC Data Model 2.0',compat:'✓',level:'Recommended',why:'Universal interop. DID-signed, JSON-LD. Best for cross-border recognition.',color:'var(--gn)'},
+    {name:'ISO/IEC 18013-5 mDL',compat:'✓',level:'Recommended',why:'Purpose-built for government ID. Offline-capable proximity protocol.',color:'var(--gn)'},
+    {name:'OID4VC / OIDC',compat:'✓',level:'Recommended',why:'Enables issuance over standard OIDC flows. Used by MOSIP eKYC.',color:'var(--gn)'},
+    {name:'SD-JWT VC',compat:'◑',level:'Optional',why:'Selective disclosure of name-only or age-only without full ID.',color:'var(--am)'},
+    {name:'AnonCreds (ZKP)',compat:'◑',level:'Optional',why:'Zero-knowledge proofs for age/nationality without revealing DOB.',color:'var(--am)'},
+    {name:'EBSI / eIDAS 2.0',compat:'—',level:'N/A',why:'EU-specific. Not relevant for most DPI deployments outside Europe.',color:'var(--t3)'},
+  ]},
+  birth:{label:'Birth Certificate',standards:[
+    {name:'W3C VC Data Model 2.0',compat:'✓',level:'Recommended',why:'Ideal for civil registry credentials. JSON-LD + DID.',color:'var(--gn)'},
+    {name:'OID4VC / OIDC',compat:'✓',level:'Recommended',why:'Standard issuance flow from civil registry systems.',color:'var(--gn)'},
+    {name:'SD-JWT VC',compat:'◑',level:'Optional',why:'Prove nationality without full certificate.',color:'var(--am)'},
+    {name:'ISO/IEC 18013-5 mDL',compat:'—',level:'N/A',why:'mDL is designed for driving licences, not civil documents.',color:'var(--t3)'},
+  ]},
+  edu:{label:'Education Certificate',standards:[
+    {name:'W3C VC Data Model 2.0',compat:'✓',level:'Recommended',why:'Open Badges / CLR built on W3C VC. Widely adopted in education.',color:'var(--gn)'},
+    {name:'OID4VC / OIDC',compat:'✓',level:'Recommended',why:'Enables learner wallet integration via OID4VCI.',color:'var(--gn)'},
+    {name:'AnonCreds (ZKP)',compat:'◑',level:'Optional',why:'Prove graduation year without revealing institution or grade.',color:'var(--am)'},
+    {name:'SD-JWT VC',compat:'◑',level:'Optional',why:'Selective disclosure of subject/institution without full transcript.',color:'var(--am)'},
+  ]},
+  farmer:{label:'Farmer Registration',standards:[
+    {name:'W3C VC Data Model 2.0',compat:'✓',level:'Recommended',why:'Portable farm record. Interoperable with G2P disbursement systems.',color:'var(--gn)'},
+    {name:'OID4VC / OIDC',compat:'✓',level:'Recommended',why:'Issuance via OpenG2P/OpenSPP enrollment flows.',color:'var(--gn)'},
+    {name:'SD-JWT VC',compat:'◑',level:'Optional',why:'Disclose farm size or crop type without full identity data.',color:'var(--am)'},
+  ]},
+  health:{label:'Health Card',standards:[
+    {name:'W3C VC Data Model 2.0',compat:'✓',level:'Recommended',why:'SMART Health Cards built on W3C VC. Used for vaccination records globally.',color:'var(--gn)'},
+    {name:'OID4VC / OIDC',compat:'✓',level:'Recommended',why:'Health wallet issuance via OID4VCI. SMART on FHIR.',color:'var(--gn)'},
+    {name:'SD-JWT VC',compat:'◑',level:'Optional',why:'Prove vaccination status without revealing full medical history.',color:'var(--am)'},
+  ]},
+  emp:{label:'Employment Record',standards:[
+    {name:'W3C VC Data Model 2.0',compat:'✓',level:'Recommended',why:'Portable employment history.',color:'var(--gn)'},
+    {name:'SD-JWT VC',compat:'✓',level:'Recommended',why:'Employer can selectively disclose dates/role without full record.',color:'var(--gn)'},
+    {name:'OID4VC / OIDC',compat:'✓',level:'Recommended',why:'HR system integration via standard OIDC.',color:'var(--gn)'},
+  ]},
+};
+
+function updateVCStandards(type){
+  const mx=VC_STANDARDS[type];
+  const panel=document.getElementById('vcStandardsPanel');
+  const body=document.getElementById('vcStandardsBody');
+  if(!mx||!panel){return;}
+  panel.style.display='block';
+  const rec=mx.standards.filter(s=>s.compat==='✓');
+  const opt=mx.standards.filter(s=>s.compat==='◑');
+  const na=mx.standards.filter(s=>s.compat==='—');
+  let html=`<div style="font-size:11px;color:var(--t2);margin-bottom:9px">Based on <strong style="color:var(--tx)">${mx.label}</strong> credential — from <a href="https://vc-use-cases.cdpi.dev" target="_blank" style="color:var(--ac)">vc-use-cases.cdpi.dev</a></div>`;
+  if(rec.length){
+    html+=`<div style="font-size:9px;color:var(--gn);font-family:'IBM Plex Mono',monospace;letter-spacing:.1em;text-transform:uppercase;margin-bottom:5px">✓ Recommended</div>`;
+    html+=rec.map(s=>`<div class="std-row rec"><div class="std-dot" style="background:var(--gn)"></div><div style="flex:1"><div style="font-size:11px;font-weight:600;color:var(--tx)">${s.name}</div><div style="font-size:10px;color:var(--t3);margin-top:2px">${s.why}</div></div><span class="ch cg">${s.level}</span></div>`).join('');
+  }
+  if(opt.length){
+    html+=`<div style="font-size:9px;color:var(--am);font-family:'IBM Plex Mono',monospace;letter-spacing:.1em;text-transform:uppercase;margin:8px 0 5px">◑ Optional / Context-dependent</div>`;
+    html+=opt.map(s=>`<div class="std-row opt"><div class="std-dot" style="background:var(--am)"></div><div style="flex:1"><div style="font-size:11px;font-weight:600;color:var(--tx)">${s.name}</div><div style="font-size:10px;color:var(--t3);margin-top:2px">${s.why}</div></div><span class="ch cam">${s.level}</span></div>`).join('');
+  }
+  if(na.length){
+    html+=`<div style="font-size:9px;color:var(--t3);font-family:'IBM Plex Mono',monospace;letter-spacing:.1em;text-transform:uppercase;margin:8px 0 5px">— Not Applicable</div>`;
+    html+=`<div style="display:flex;flex-wrap:wrap;gap:4px">${na.map(s=>`<span class="ch cgr">${s.name}</span>`).join('')}</div>`;
+  }
+  body.innerHTML=html;
+}
+
+// ===== INIT =====
+updateVCFields();
+updatePhoneTime();
+</script>
+</body>
+</html>
