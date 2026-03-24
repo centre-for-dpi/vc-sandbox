@@ -41,4 +41,4 @@ Open `index.html` in any modern browser. That's it — no build step, no depende
 
 ## License
 
-Open source (LICENSE)[./LICENSE] . Part of the [CDPI](https://cdpi.dev) digital credentials initiative.
+Open source [LICENSE](LICENSE) . Part of the [CDPI](https://cdpi.dev) digital credentials initiative.
